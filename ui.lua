@@ -41,8 +41,9 @@ function UI.Build(deps, library)
 
     -- Aimbot page
     do
-        local column = aimPage:column({})
-        local section = column:section({ name = "Aimbot", default = true, size = 0.95 })
+        local leftCol = aimPage:column({})
+        local rightCol = aimPage:column({})
+        local section = leftCol:section({ name = "Aimbot", default = true, size = 0.6 })
 
         section:toggle({
             name = "Enable Aimbot",
@@ -96,28 +97,30 @@ function UI.Build(deps, library)
             callback = function(v) S.Hitbox = v end,
         })
 
-        section:slider({
+        local tuning = rightCol:section({ name = "Tuning", default = true, size = 0.6 })
+
+        tuning:slider({
             name = "Smoothing",
             min = 0, max = 1, interval = 0.01,
             default = S.Aim_Smoothing,
             seperator = true,
             callback = function(v) S.Aim_Smoothing = v end,
         })
-        section:slider({
+        tuning:slider({
             name = "FOV (Hold)",
             min = 10, max = 800, interval = 1,
             default = S.Aim_FOV_Hold,
             seperator = true,
             callback = function(v) S.Aim_FOV_Hold = v end,
         })
-        section:slider({
+        tuning:slider({
             name = "FOV (Toggle)",
             min = 10, max = 800, interval = 1,
             default = S.Aim_FOV_Toggle,
             seperator = true,
             callback = function(v) S.Aim_FOV_Toggle = v end,
         })
-        section:slider({
+        tuning:slider({
             name = "Max Distance",
             min = 100, max = 5000, interval = 10,
             default = S.Aim_MaxDistance,
@@ -125,7 +128,7 @@ function UI.Build(deps, library)
             callback = function(v) S.Aim_MaxDistance = v end,
         })
 
-        section:colorpicker({
+        tuning:colorpicker({
             name = "Lock Color",
             color = S.Aimbot_LockColor,
             seperator = false,
@@ -161,8 +164,9 @@ function UI.Build(deps, library)
 
     -- Enemies (S.ESP_* + ESPFlags)
     do
-        local column = enemies:column({})
-        local general = column:section({ name = "General", default = true, size = 0.22 })
+        local leftCol = enemies:column({})
+        local rightCol = enemies:column({})
+        local general = leftCol:section({ name = "General", default = true, size = 0.3 })
         general:toggle({
             name = "Enable ESP",
             default = S.ESP_Enabled,
@@ -178,7 +182,7 @@ function UI.Build(deps, library)
             callback = function(v) S.ESP_MaxDistance = v end,
         })
 
-        local elements = column:section({ name = "Elements", default = true, size = 0.48 })
+        local elements = leftCol:section({ name = "Elements", default = true, size = 0.7 })
 
         -- Names + submenu (DisplayName / UserName)
         local nameToggle = elements:toggle({
@@ -250,7 +254,7 @@ function UI.Build(deps, library)
             callback = function(bool) ESPFlags["Weapon"] = bool; refresh() end,
         })
 
-        local colors = column:section({ name = "Colors", default = true, size = 0.3 })
+        local colors = rightCol:section({ name = "Colors", default = true, size = 0.45 })
         colors:colorpicker({
             name = "Health High",
             color = ESPFlags["Health_High"].Color,
@@ -279,8 +283,9 @@ function UI.Build(deps, library)
 
     -- Teammates (S.Teammate_*)
     do
-        local column = teammates:column({})
-        local section = column:section({ name = "Teammates", default = true, size = 0.6 })
+        local leftCol = teammates:column({})
+        local rightCol = teammates:column({})
+        local section = leftCol:section({ name = "Teammates", default = true, size = 0.5 })
         section:toggle({
             name = "Enable Teammates ESP",
             default = S.Teammates_Enabled,
@@ -301,35 +306,38 @@ function UI.Build(deps, library)
             callback = function(color) S.Teammate_Name_Color = color; refresh() end,
         })
         section:colorpicker({
-            name = "Health High",
-            color = S.Teammate_Health_High,
-            seperator = true,
-            callback = function(color) S.Teammate_Health_High = color end,
-        })
-        section:colorpicker({
-            name = "Health Low",
-            color = S.Teammate_Health_Low,
-            seperator = true,
-            callback = function(color) S.Teammate_Health_Low = color end,
-        })
-        section:colorpicker({
-            name = "Distance Color",
-            color = S.Teammate_Distance_Color,
-            seperator = true,
-            callback = function(color) S.Teammate_Distance_Color = color; refresh() end,
-        })
-        section:colorpicker({
             name = "Weapon Color",
             color = S.Teammate_Weapon_Color,
             seperator = false,
             callback = function(color) S.Teammate_Weapon_Color = color; refresh() end,
         })
+
+        local colors2 = rightCol:section({ name = "Health Colors", default = true, size = 0.5 })
+        colors2:colorpicker({
+            name = "Health High",
+            color = S.Teammate_Health_High,
+            seperator = true,
+            callback = function(color) S.Teammate_Health_High = color end,
+        })
+        colors2:colorpicker({
+            name = "Health Low",
+            color = S.Teammate_Health_Low,
+            seperator = true,
+            callback = function(color) S.Teammate_Health_Low = color end,
+        })
+        colors2:colorpicker({
+            name = "Distance Color",
+            color = S.Teammate_Distance_Color,
+            seperator = false,
+            callback = function(color) S.Teammate_Distance_Color = color; refresh() end,
+        })
     end
 
     -- Self (S.Self_*)
     do
-        local column = selfTab:column({})
-        local section = column:section({ name = "Self", default = true, size = 0.6 })
+        local leftCol = selfTab:column({})
+        local rightCol = selfTab:column({})
+        local section = leftCol:section({ name = "Self", default = true, size = 0.5 })
         section:toggle({
             name = "Enable Self ESP",
             default = S.SelfESP_Enabled,
@@ -350,28 +358,30 @@ function UI.Build(deps, library)
             callback = function(color) S.Self_Name_Color = color; refresh() end,
         })
         section:colorpicker({
+            name = "Weapon Color",
+            color = S.Self_Weapon_Color,
+            seperator = false,
+            callback = function(color) S.Self_Weapon_Color = color; refresh() end,
+        })
+
+        local colors3 = rightCol:section({ name = "Health Colors", default = true, size = 0.5 })
+        colors3:colorpicker({
             name = "Health High",
             color = S.Self_Health_High,
             seperator = true,
             callback = function(color) S.Self_Health_High = color end,
         })
-        section:colorpicker({
+        colors3:colorpicker({
             name = "Health Low",
             color = S.Self_Health_Low,
             seperator = true,
             callback = function(color) S.Self_Health_Low = color end,
         })
-        section:colorpicker({
+        colors3:colorpicker({
             name = "Distance Color",
             color = S.Self_Distance_Color,
-            seperator = true,
-            callback = function(color) S.Self_Distance_Color = color; refresh() end,
-        })
-        section:colorpicker({
-            name = "Weapon Color",
-            color = S.Self_Weapon_Color,
             seperator = false,
-            callback = function(color) S.Self_Weapon_Color = color; refresh() end,
+            callback = function(color) S.Self_Distance_Color = color; refresh() end,
         })
     end
 
@@ -381,8 +391,9 @@ function UI.Build(deps, library)
     local lightingPage, chamsPage, miscPage = window:tab({ name = "World", tabs = { "Lighting", "Chams", "Misc" } })
 
     do
-        local column = lightingPage:column({})
-        local section = column:section({ name = "Lighting", default = true, size = 0.3 })
+        local leftCol = lightingPage:column({})
+        local rightCol = lightingPage:column({})
+        local section = leftCol:section({ name = "Lighting", default = true, size = 0.5 })
         section:toggle({
             name = "Fullbright",
             default = S.Fullbright_Enabled,
@@ -397,7 +408,9 @@ function UI.Build(deps, library)
             type = "toggle",
             callback = function(bool) S.Ambient_Enabled = bool end,
         })
-        section:colorpicker({
+
+        local colors4 = rightCol:section({ name = "Colors", default = true, size = 0.5 })
+        colors4:colorpicker({
             name = "Ambient Color",
             color = S.Ambient_Color,
             seperator = false,
@@ -406,8 +419,9 @@ function UI.Build(deps, library)
     end
 
     do
-        local column = chamsPage:column({})
-        local section = column:section({ name = "Chams", default = true, size = 0.5 })
+        local leftCol = chamsPage:column({})
+        local rightCol = chamsPage:column({})
+        local section = leftCol:section({ name = "Enemy Chams", default = true, size = 0.5 })
         section:toggle({
             name = "Enable Chams",
             default = S.Chams_Enabled,
@@ -425,24 +439,26 @@ function UI.Build(deps, library)
         section:colorpicker({
             name = "Chams Color",
             color = S.Chams_Color,
-            seperator = true,
+            seperator = false,
             callback = function(color) S.Chams_Color = color end,
         })
-        section:toggle({
+
+        local selfChams = rightCol:section({ name = "Self Chams", default = true, size = 0.5 })
+        selfChams:toggle({
             name = "Self Chams",
             default = S.SelfChams_Enabled,
             seperator = true,
             type = "toggle",
             callback = function(bool) S.SelfChams_Enabled = bool end,
         })
-        dropdown(section, {
-            name = "Self Material",
+        dropdown(selfChams, {
+            name = "Material",
             items = { "ForceField", "Neon", "SmoothPlastic", "Plastic", "Glass" },
             default = S.SelfChams_Material,
             seperator = true,
             callback = function(v) S.SelfChams_Material = v end,
         })
-        section:colorpicker({
+        selfChams:colorpicker({
             name = "Self Color",
             color = S.SelfChams_Color,
             seperator = false,
