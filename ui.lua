@@ -19,6 +19,15 @@ function UI.Build(deps, library)
         end
     end
 
+    -- MilleniumDropdown не ставит заголовок (в библиотеке захардкожен текст "Dropdown") — правим вручную
+    local function dropdown(section, props)
+        local dd = section:dropdown(props)
+        if props.name then
+            pcall(function() dd.items["name"].Text = props.name end)
+        end
+        return dd
+    end
+
     local window = library:window({
         name = "pasta",
         suffix = "sense",
@@ -33,18 +42,20 @@ function UI.Build(deps, library)
     -- Aimbot page
     do
         local column = aimPage:column({})
-        local section = column:section({ name = "Aimbot", default = true })
+        local section = column:section({ name = "Aimbot", default = true, size = 0.95 })
 
         section:toggle({
             name = "Enable Aimbot",
             default = S.Aimbot_Enabled,
             seperator = true,
+            type = "toggle",
             callback = function(bool) S.Aimbot_Enabled = bool end,
         })
         section:toggle({
             name = "Wall Check",
             default = S.Aimbot_WallCheck,
             seperator = true,
+            type = "toggle",
             callback = function(bool) S.Aimbot_WallCheck = bool end,
         })
         section:toggle({
@@ -52,28 +63,32 @@ function UI.Build(deps, library)
             info = "OFF = hold RMB, ON = FOV Toggle",
             default = S.Aimbot_ToggleMode,
             seperator = true,
+            type = "toggle",
             callback = function(bool) S.Aimbot_ToggleMode = bool end,
         })
         section:toggle({
             name = "Team Check",
             default = S.TeamCheck,
             seperator = true,
+            type = "toggle",
             callback = function(bool) S.TeamCheck = bool end,
         })
         section:toggle({
             name = "Death Check",
             default = S.DeathCheck,
             seperator = true,
+            type = "toggle",
             callback = function(bool) S.DeathCheck = bool end,
         })
         section:toggle({
             name = "Show FOV",
             default = S.Show_FOV,
             seperator = true,
+            type = "toggle",
             callback = function(bool) S.Show_FOV = bool end,
         })
 
-        section:dropdown({
+        local _ = dropdown(section, {
             name = "Hitbox",
             items = { "Head", "Torso", "Random" },
             default = S.Hitbox,
@@ -121,12 +136,13 @@ function UI.Build(deps, library)
     -- Trigger page
     do
         local column = triggerPage:column({})
-        local section = column:section({ name = "Triggerbot", default = true })
+        local section = column:section({ name = "Triggerbot", default = true, size = 0.25 })
 
         section:toggle({
             name = "Enable Trigger",
             default = S.Trigger_Enabled,
             seperator = true,
+            type = "toggle",
             callback = function(bool) S.Trigger_Enabled = bool end,
         })
         section:slider({
@@ -146,11 +162,12 @@ function UI.Build(deps, library)
     -- Enemies (S.ESP_* + ESPFlags)
     do
         local column = enemies:column({})
-        local general = column:section({ name = "General", default = true })
+        local general = column:section({ name = "General", default = true, size = 0.22 })
         general:toggle({
             name = "Enable ESP",
             default = S.ESP_Enabled,
             seperator = true,
+            type = "toggle",
             callback = function(bool) S.ESP_Enabled = bool; ESPFlags["Enabled"] = bool; refresh() end,
         })
         general:slider({
@@ -161,13 +178,14 @@ function UI.Build(deps, library)
             callback = function(v) S.ESP_MaxDistance = v end,
         })
 
-        local elements = column:section({ name = "Elements", default = true })
+        local elements = column:section({ name = "Elements", default = true, size = 0.48 })
 
         -- Names + submenu (DisplayName / UserName)
         local nameToggle = elements:toggle({
             name = "Name",
             default = ESPFlags["Names"],
             seperator = true,
+            type = "toggle",
             callback = function(bool) ESPFlags["Names"] = bool; refresh() end,
         })
         nameToggle:colorpicker({
@@ -179,12 +197,14 @@ function UI.Build(deps, library)
             name = "Show Display Names",
             default = ESPFlags["Name_DisplayName"],
             seperator = true,
+            type = "toggle",
             callback = function(bool) ESPFlags["Name_DisplayName"] = bool; refresh() end,
         })
         nameSettings:toggle({
             name = "Show Usernames",
             default = ESPFlags["Name_UserName"],
             seperator = false,
+            type = "toggle",
             callback = function(bool) ESPFlags["Name_UserName"] = bool; refresh() end,
         })
 
@@ -193,13 +213,14 @@ function UI.Build(deps, library)
             name = "Boxes",
             default = ESPFlags["Boxes"],
             seperator = true,
+            type = "toggle",
             callback = function(bool) ESPFlags["Boxes"] = bool; refresh() end,
         })
         boxToggle:colorpicker({
             color = ESPFlags["Box_Color"].Color,
             callback = function(color) ESPFlags["Box_Color"].Color = color; refresh() end,
         })
-        elements:dropdown({
+        dropdown(elements, {
             name = "Box Type",
             items = { "Corner", "Full" },
             default = ESPFlags["Box_Type"],
@@ -211,22 +232,25 @@ function UI.Build(deps, library)
             name = "Healthbar",
             default = ESPFlags["Healthbar"],
             seperator = true,
+            type = "toggle",
             callback = function(bool) ESPFlags["Healthbar"] = bool; refresh() end,
         })
         elements:toggle({
             name = "Distance",
             default = ESPFlags["Distance"],
             seperator = true,
+            type = "toggle",
             callback = function(bool) ESPFlags["Distance"] = bool; refresh() end,
         })
         elements:toggle({
             name = "Weapon",
             default = ESPFlags["Weapon"],
             seperator = true,
+            type = "toggle",
             callback = function(bool) ESPFlags["Weapon"] = bool; refresh() end,
         })
 
-        local colors = column:section({ name = "Colors", default = true })
+        local colors = column:section({ name = "Colors", default = true, size = 0.3 })
         colors:colorpicker({
             name = "Health High",
             color = ESPFlags["Health_High"].Color,
@@ -256,11 +280,12 @@ function UI.Build(deps, library)
     -- Teammates (S.Teammate_*)
     do
         local column = teammates:column({})
-        local section = column:section({ name = "Teammates", default = true })
+        local section = column:section({ name = "Teammates", default = true, size = 0.6 })
         section:toggle({
             name = "Enable Teammates ESP",
             default = S.Teammates_Enabled,
             seperator = true,
+            type = "toggle",
             callback = function(bool) S.Teammates_Enabled = bool; refresh() end,
         })
         section:colorpicker({
@@ -304,11 +329,12 @@ function UI.Build(deps, library)
     -- Self (S.Self_*)
     do
         local column = selfTab:column({})
-        local section = column:section({ name = "Self", default = true })
+        local section = column:section({ name = "Self", default = true, size = 0.6 })
         section:toggle({
             name = "Enable Self ESP",
             default = S.SelfESP_Enabled,
             seperator = true,
+            type = "toggle",
             callback = function(bool) S.SelfESP_Enabled = bool; refresh() end,
         })
         section:colorpicker({
@@ -356,17 +382,19 @@ function UI.Build(deps, library)
 
     do
         local column = lightingPage:column({})
-        local section = column:section({ name = "Lighting", default = true })
+        local section = column:section({ name = "Lighting", default = true, size = 0.3 })
         section:toggle({
             name = "Fullbright",
             default = S.Fullbright_Enabled,
             seperator = true,
+            type = "toggle",
             callback = function(bool) S.Fullbright_Enabled = bool end,
         })
         section:toggle({
             name = "Ambient",
             default = S.Ambient_Enabled,
             seperator = true,
+            type = "toggle",
             callback = function(bool) S.Ambient_Enabled = bool end,
         })
         section:colorpicker({
@@ -379,14 +407,15 @@ function UI.Build(deps, library)
 
     do
         local column = chamsPage:column({})
-        local section = column:section({ name = "Chams", default = true })
+        local section = column:section({ name = "Chams", default = true, size = 0.5 })
         section:toggle({
             name = "Enable Chams",
             default = S.Chams_Enabled,
             seperator = true,
+            type = "toggle",
             callback = function(bool) S.Chams_Enabled = bool end,
         })
-        section:dropdown({
+        dropdown(section, {
             name = "Material",
             items = { "ForceField", "Neon", "SmoothPlastic", "Plastic", "Glass" },
             default = S.Chams_Material,
@@ -403,9 +432,10 @@ function UI.Build(deps, library)
             name = "Self Chams",
             default = S.SelfChams_Enabled,
             seperator = true,
+            type = "toggle",
             callback = function(bool) S.SelfChams_Enabled = bool end,
         })
-        section:dropdown({
+        dropdown(section, {
             name = "Self Material",
             items = { "ForceField", "Neon", "SmoothPlastic", "Plastic", "Glass" },
             default = S.SelfChams_Material,
@@ -422,17 +452,19 @@ function UI.Build(deps, library)
 
     do
         local column = miscPage:column({})
-        local section = column:section({ name = "Misc", default = true })
+        local section = column:section({ name = "Misc", default = true, size = 0.35 })
         section:toggle({
             name = "Watermark",
             default = S.Watermark_Enabled,
             seperator = true,
+            type = "toggle",
             callback = function(bool) S.Watermark_Enabled = bool end,
         })
         section:toggle({
             name = "Tracers",
             default = S.Tracers_Enabled,
             seperator = true,
+            type = "toggle",
             callback = function(bool) S.Tracers_Enabled = bool end,
         })
         section:button({
