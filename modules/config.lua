@@ -1,0 +1,75 @@
+local Config = {}
+
+Config.ESP = {
+    TOP_OFFSET = Vector3.new(0, 3, 0),
+    BOTTOM_OFFSET = Vector3.new(0, 3.5, 0),
+    DISTANCE_DIVISOR = 3.5,
+    MIN_HEIGHT = 6,
+    MIN_WIDTH = 4,
+}
+
+Config.S = {
+    Aimbot_Enabled = false,
+    Aimbot_WallCheck = true,
+    Aimbot_ToggleMode = false,
+    Aimbot_LockColor = Color3.fromRGB(255, 255, 0),
+    TeamCheck = true,
+    DeathCheck = true,
+    Hitbox = "Head",
+    Trigger_Enabled = false,
+    Trigger_Delay = 120,
+    Aim_Smoothing = 0.25,
+    Aim_FOV_Hold = 150,
+    Aim_FOV_Toggle = 150,
+    Aim_MaxDistance = 2000,
+    Show_FOV = false,
+    Watermark_Enabled = true,
+
+    ESP_Enabled = false,
+    Tracers_Enabled = false,
+    ESP_MaxDistance = 2000,
+
+    Fullbright_Enabled = false,
+    Ambient_Enabled = false,
+    Ambient_Color = Color3.fromRGB(128, 128, 128),
+    Chams_Enabled = false,
+    Chams_Material = "ForceField",
+    Chams_Color = Color3.fromRGB(255, 255, 255),
+    SelfChams_Enabled = false,
+    SelfChams_Material = "ForceField",
+    SelfChams_Color = Color3.fromRGB(255, 255, 255),
+    Teammates_Enabled = true,
+    Teammate_Box_Color = Color3.fromRGB(80, 160, 255),
+    Teammate_Name_Color = Color3.fromRGB(80, 160, 255),
+    Teammate_Health_High = Color3.fromRGB(80, 160, 255),
+    Teammate_Health_Low = Color3.fromRGB(80, 100, 200),
+    Teammate_Distance_Color = Color3.fromRGB(80, 160, 255),
+    Teammate_Weapon_Color = Color3.fromRGB(80, 160, 255),
+    SelfESP_Enabled = false,
+    Self_Box_Color = Color3.fromRGB(255, 255, 255),
+    Self_Name_Color = Color3.fromRGB(255, 255, 255),
+    Self_Health_High = Color3.fromRGB(255, 255, 255),
+    Self_Health_Low = Color3.fromRGB(200, 200, 200),
+    Self_Distance_Color = Color3.fromRGB(255, 255, 255),
+    Self_Weapon_Color = Color3.fromRGB(255, 255, 255),
+}
+
+Config.ESPFlags = {
+    ["Enabled"] = Config.S.ESP_Enabled,
+    ["Names"] = true,
+    ["Name_DisplayName"] = true,
+    ["Name_UserName"] = true,
+    ["Name_Color"] = { Color = Color3.fromRGB(0, 255, 255) },
+    ["Boxes"] = true,
+    ["Box_Type"] = "Corner",
+    ["Box_Color"] = { Color = Color3.fromRGB(0, 255, 0) },
+    ["Healthbar"] = true,
+    ["Health_High"] = { Color = Color3.fromRGB(0, 255, 0) },
+    ["Health_Low"] = { Color = Color3.fromRGB(255, 0, 0) },
+    ["Distance"] = true,
+    ["Weapon"] = true,
+    ["Distance_Color"] = { Color = Color3.fromRGB(0, 255, 0) },
+    ["Weapon_Color"] = { Color = Color3.fromRGB(0, 255, 255) },
+}
+
+return Config
