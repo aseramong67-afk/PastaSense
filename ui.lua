@@ -420,7 +420,12 @@ function UI.Build(deps, library)
             default = S.Chams_Enabled,
             seperator = true,
             type = "toggle",
-            callback = function(bool) S.Chams_Enabled = bool end,
+            callback = function(bool)
+                S.Chams_Enabled = bool
+                if not bool and not S.SelfChams_Enabled then
+                    pcall(function() deps.Chams.Restore() end)
+                end
+            end,
         })
         dropdown(section, {
             name = "Material",
@@ -442,7 +447,12 @@ function UI.Build(deps, library)
             default = S.SelfChams_Enabled,
             seperator = true,
             type = "toggle",
-            callback = function(bool) S.SelfChams_Enabled = bool end,
+            callback = function(bool)
+                S.SelfChams_Enabled = bool
+                if not bool and not S.Chams_Enabled then
+                    pcall(function() deps.Chams.Restore() end)
+                end
+            end,
         })
         dropdown(selfChams, {
             name = "Material",
