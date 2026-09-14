@@ -1,3 +1,13 @@
+-- ui.lua — Seere UI + привязка модулей PastaSense
+-- API: library:addTab(name) -> tab
+--      tab:createGroup("left"|"center"|"right", name) -> group
+--      group:addToggle({text, flag, callback}) -> toggle
+--      toggle:addColorpicker({text?, flag, color?, callback?})
+--      group:addSlider({text, flag, min, max, value, callback}, suffix) -- только целые числа!
+--      group:addList({text, flag, values, value, callback})
+--      group:addButton({text, callback})
+--      group:addColorpicker({text, flag, color, callback})
+
 local UI = {}
 
 function UI.Build(deps, library)
@@ -11,360 +21,188 @@ function UI.Build(deps, library)
         end
     end
 
-    local dim2 = UDim2.new
+    -- seere тоглы всегда стартуют ВЫКЛ — после построения синкаем из S
+    local togglesToSync = {}
+    local function tg(group, text, flag, get, set)
+        group:addToggle({ text = text, flag = flag, callback = set })
+        togglesToSync[#togglesToSync + 1] = { flag, get }
+    end
 
-    local window = library:window({
-        name = "PastaSense | " .. os.date("%b %d %Y"),
-        size = dim2(0, 604, 0, 628),
+    -- ============ AIMBOT ============
+    local aimTab = library:addTab("Aimbot")
+    local gAim = aimTab:createGroup("left", "Aimbot")
+    tg(gAim, "Enable Aimbot", "Aimbot_Enabled", function() return S.Aimbot_Enabled end, function(b) S.Aimbot_Enabled = b end)
+    tg(gAim, "Wall Check", "Aimbot_WallCheck", function() return S.Aimbot_WallCheck end, function(b) S.Aimbot_WallCheck = b end)
+    tg(gAim, "Toggle Mode", "Aimbot_ToggleMode", function() return S.Aimbot_ToggleMode end, function(b) S.Aimbot_ToggleMode = b end)
+    tg(gAim, "Team Check", "TeamCheck", function() return S.TeamCheck end, function(b) S.TeamCheck = b end)
+    tg(gAim, "Death Check", "DeathCheck", function() return S.DeathCheck end, function(b) S.DeathCheck = b end)
+    tg(gAim, "Show FOV", "Show_FOV", function() return S.Show_FOV end, function(b) S.Show_FOV = b end)
+    gAim:addList({
+        text = "Hitbox", flag = "Hitbox",
+        values = { "Head", "Torso", "Random" }, value = S.Hitbox,
+        callback = function(v) S.Hitbox = v end,
     })
 
-    -- ============ COMBAT / AIMBOT ============
-    local aimTab = window:tab({name = "Aimbot"})
-    do
-        local col = aimTab:column()
-        local aimSec, tuneSec = col:multi_section({names = {"Aimbot", "Tuning"}})
+    local gTune = aimTab:createGroup("right", "Tuning")
+    gTune:addSlider({
+        text = "Smoothing", flag = "Aim_Smoothing", min = 0, max = 100,
+        value = math.floor(S.Aim_Smoothing * 100 + 0.5),
+        callback = function(v) S.Aim_Smoothing = v / 100 end,
+    }, "%")
+    gTune:addSlider({
+        text = "FOV", flag = "Aim_FOV", min = 10, max = 800, value = S.Aim_FOV_Hold,
+        callback = function(v) S.Aim_FOV_Hold = v; S.Aim_FOV_Toggle = v end,
+    }, "")
+    gTune:addSlider({
+        text = "Max Distance", flag = "Aim_MaxDist", min = 100, max = 5000, value = S.Aim_MaxDistance,
+        callback = function(v) S.Aim_MaxDistance = v end,
+    }, "")
+    gTune:addColorpicker({
+        text = "Lock Color", flag = "Aimbot_LockColor", color = S.Aimbot_LockColor,
+        callback = function(c) S.Aimbot_LockColor = c end,
+    })
 
-        aimSec:toggle({
-            name = "Enable Aimbot",
-            flag = "Aimbot_Enabled",
-            callback = function(bool) S.Aimbot_Enabled = bool end,
-        })
-        aimSec:toggle({
-            name = "Wall Check",
-            flag = "Aimbot_WallCheck",
-            callback = function(bool) S.Aimbot_WallCheck = bool end,
-        })
-        aimSec:toggle({
-            name = "Toggle Mode",
-            flag = "Aimbot_ToggleMode",
-            tooltip = "OFF = hold RMB, ON = FOV Toggle",
-            callback = function(bool) S.Aimbot_ToggleMode = bool end,
-        })
-        aimSec:toggle({
-            name = "Team Check",
-            flag = "TeamCheck",
-            callback = function(bool) S.TeamCheck = bool end,
-        })
-        aimSec:toggle({
-            name = "Death Check",
-            flag = "DeathCheck",
-            callback = function(bool) S.DeathCheck = bool end,
-        })
-        aimSec:toggle({
-            name = "Show FOV",
-            flag = "Show_FOV",
-            callback = function(bool) S.Show_FOV = bool end,
-        })
-        aimSec:dropdown({
-            name = "Hitbox",
-            flag = "Hitbox",
-            items = {"Head", "Torso", "Random"},
-            default = "Head",
-            callback = function(v) S.Hitbox = v end,
-        })
+    -- ============ TRIGGER ============
+    local trigTab = library:addTab("Trigger")
+    local gTrig = trigTab:createGroup("left", "Triggerbot")
+    tg(gTrig, "Enable Trigger", "Trigger_Enabled", function() return S.Trigger_Enabled end, function(b) S.Trigger_Enabled = b end)
+    gTrig:addSlider({
+        text = "Delay", flag = "Trigger_Delay", min = 0, max = 500, value = S.Trigger_Delay,
+        callback = function(v) S.Trigger_Delay = v end,
+    }, "ms")
 
-        tuneSec:slider({
-            name = "Smoothing",
-            flag = "Aim_Smoothing",
-            min = 0, max = 1, interval = 0.01,
-            default = S.Aim_Smoothing,
-            callback = function(v) S.Aim_Smoothing = v end,
-        })
-        tuneSec:slider({
-            name = "FOV",
-            flag = "Aim_FOV",
-            min = 10, max = 800, interval = 1,
-            default = S.Aim_FOV_Hold,
-            callback = function(v) S.Aim_FOV_Hold = v; S.Aim_FOV_Toggle = v end,
-        })
-        tuneSec:slider({
-            name = "Max Distance",
-            flag = "Aim_MaxDist",
-            min = 100, max = 5000, interval = 10,
-            default = S.Aim_MaxDistance,
-            callback = function(v) S.Aim_MaxDistance = v end,
-        })
-        tuneSec:colorpicker({
-            name = "Lock Color",
-            flag = "Aimbot_LockColor",
-            color = S.Aimbot_LockColor,
-            callback = function(color) S.Aimbot_LockColor = color end,
-        })
+    -- ============ ENEMIES ============
+    local espTab = library:addTab("Enemies")
+    local gGen = espTab:createGroup("left", "General")
+    tg(gGen, "Enable ESP", "ESP_Enabled", function() return S.ESP_Enabled end, function(b) S.ESP_Enabled = b; ESPFlags["Enabled"] = b; refresh() end)
+    gGen:addSlider({
+        text = "Max Distance", flag = "ESP_MaxDist", min = 100, max = 5000, value = S.ESP_MaxDistance,
+        callback = function(v) S.ESP_MaxDistance = v end,
+    }, "")
+
+    local gEl = espTab:createGroup("left", "Elements")
+    local tNames = gEl:addToggle({ text = "Names", flag = "ESP_Names", callback = function(b) ESPFlags["Names"] = b; refresh() end })
+    togglesToSync[#togglesToSync + 1] = { "ESP_Names", function() return ESPFlags["Names"] end }
+    tNames:addColorpicker({ flag = "ESP_Name_Color", color = ESPFlags["Name_Color"].Color,
+        callback = function(c) ESPFlags["Name_Color"].Color = c; refresh() end })
+
+    local tBoxes = gEl:addToggle({ text = "Boxes", flag = "ESP_Boxes", callback = function(b) ESPFlags["Boxes"] = b; refresh() end })
+    togglesToSync[#togglesToSync + 1] = { "ESP_Boxes", function() return ESPFlags["Boxes"] end }
+    tBoxes:addColorpicker({ flag = "ESP_Box_Color", color = ESPFlags["Box_Color"].Color,
+        callback = function(c) ESPFlags["Box_Color"].Color = c; refresh() end })
+
+    local tHP = gEl:addToggle({ text = "Healthbar", flag = "ESP_Healthbar", callback = function(b) ESPFlags["Healthbar"] = b; refresh() end })
+    togglesToSync[#togglesToSync + 1] = { "ESP_Healthbar", function() return ESPFlags["Healthbar"] end }
+    tHP:addColorpicker({ text = "High HP", flag = "ESP_Health_High", color = ESPFlags["Health_High"].Color,
+        callback = function(c) ESPFlags["Health_High"].Color = c end })
+    tHP:addColorpicker({ text = "Low HP", flag = "ESP_Health_Low", color = ESPFlags["Health_Low"].Color, second = true,
+        callback = function(c) ESPFlags["Health_Low"].Color = c end })
+
+    local tDist = gEl:addToggle({ text = "Distance", flag = "ESP_Distance", callback = function(b) ESPFlags["Distance"] = b; refresh() end })
+    togglesToSync[#togglesToSync + 1] = { "ESP_Distance", function() return ESPFlags["Distance"] end }
+    tDist:addColorpicker({ flag = "ESP_Distance_Color", color = ESPFlags["Distance_Color"].Color,
+        callback = function(c) ESPFlags["Distance_Color"].Color = c; refresh() end })
+
+    local tWpn = gEl:addToggle({ text = "Weapon", flag = "ESP_Weapon", callback = function(b) ESPFlags["Weapon"] = b; refresh() end })
+    togglesToSync[#togglesToSync + 1] = { "ESP_Weapon", function() return ESPFlags["Weapon"] end }
+    tWpn:addColorpicker({ flag = "ESP_Weapon_Color", color = ESPFlags["Weapon_Color"].Color,
+        callback = function(c) ESPFlags["Weapon_Color"].Color = c; refresh() end })
+
+    local gStyle = espTab:createGroup("right", "Style")
+    gStyle:addList({
+        text = "Box Type", flag = "ESP_Box_Type",
+        values = { "Corner", "Full" }, value = ESPFlags["Box_Type"],
+        callback = function(v) ESPFlags["Box_Type"] = v; refresh() end,
+    })
+
+    -- ============ TEAMMATES ============
+    local tmTab = library:addTab("Teammates")
+    local gTm = tmTab:createGroup("left", "Teammates")
+    tg(gTm, "Enable Teammates ESP", "Teammates_Enabled", function() return S.Teammates_Enabled end, function(b) S.Teammates_Enabled = b; refresh() end)
+
+    local gTmC = tmTab:createGroup("right", "Colors")
+    gTmC:addColorpicker({ text = "Box Color", flag = "Tm_Box", color = S.Teammate_Box_Color,
+        callback = function(c) S.Teammate_Box_Color = c; refresh() end })
+    gTmC:addColorpicker({ text = "Name Color", flag = "Tm_Name", color = S.Teammate_Name_Color,
+        callback = function(c) S.Teammate_Name_Color = c; refresh() end })
+    gTmC:addColorpicker({ text = "Weapon Color", flag = "Tm_Weapon", color = S.Teammate_Weapon_Color,
+        callback = function(c) S.Teammate_Weapon_Color = c; refresh() end })
+    gTmC:addColorpicker({ text = "Health High", flag = "Tm_High", color = S.Teammate_Health_High,
+        callback = function(c) S.Teammate_Health_High = c end })
+    gTmC:addColorpicker({ text = "Health Low", flag = "Tm_Low", color = S.Teammate_Health_Low,
+        callback = function(c) S.Teammate_Health_Low = c end })
+    gTmC:addColorpicker({ text = "Distance Color", flag = "Tm_Dist", color = S.Teammate_Distance_Color,
+        callback = function(c) S.Teammate_Distance_Color = c; refresh() end })
+
+    -- ============ SELF ============
+    local selfTab = library:addTab("Self")
+    local gSelf = selfTab:createGroup("left", "Self ESP")
+    tg(gSelf, "Enable Self ESP", "SelfESP_Enabled", function() return S.SelfESP_Enabled end, function(b) S.SelfESP_Enabled = b; refresh() end)
+    gSelf:addColorpicker({ text = "Box Color", flag = "Self_Box", color = S.Self_Box_Color,
+        callback = function(c) S.Self_Box_Color = c; refresh() end })
+    gSelf:addColorpicker({ text = "Name Color", flag = "Self_Name", color = S.Self_Name_Color,
+        callback = function(c) S.Self_Name_Color = c; refresh() end })
+    gSelf:addColorpicker({ text = "Weapon Color", flag = "Self_Weapon", color = S.Self_Weapon_Color,
+        callback = function(c) S.Self_Weapon_Color = c; refresh() end })
+
+    local gMat = selfTab:createGroup("right", "Self Material")
+    tg(gMat, "Enable Self Material", "SelfChams_Enabled", function() return S.SelfChams_Enabled end, function(b)
+        S.SelfChams_Enabled = b
+        if not b then pcall(function() deps.Chams.RestoreSelf() end) end
+    end)
+    gMat:addList({
+        text = "Material", flag = "SelfChams_Material",
+        values = { "ForceField", "Neon", "SmoothPlastic", "Plastic", "Glass" }, value = S.SelfChams_Material,
+        callback = function(v) S.SelfChams_Material = v end,
+    })
+    gMat:addColorpicker({ text = "Color", flag = "SelfChams_Color", color = S.SelfChams_Color,
+        callback = function(c) S.SelfChams_Color = c end })
+
+    -- ============ WORLD ============
+    local worldTab = library:addTab("World")
+    local gLight = worldTab:createGroup("left", "Lighting")
+    tg(gLight, "Fullbright", "Fullbright_Enabled", function() return S.Fullbright_Enabled end, function(b) S.Fullbright_Enabled = b end)
+    tg(gLight, "Ambient", "Ambient_Enabled", function() return S.Ambient_Enabled end, function(b) S.Ambient_Enabled = b end)
+    gLight:addColorpicker({ text = "Ambient Color", flag = "Ambient_Color", color = S.Ambient_Color,
+        callback = function(c) S.Ambient_Color = c end })
+
+    local gChams = worldTab:createGroup("right", "Highlights")
+    tg(gChams, "Enemy Highlights", "Chams_Enabled", function() return S.Chams_Enabled end, function(b)
+        S.Chams_Enabled = b
+        if not b then pcall(function() deps.Chams.RestoreHighlights() end) end
+    end)
+    gChams:addColorpicker({ text = "Highlight Color", flag = "Chams_Color", color = S.Chams_Color,
+        callback = function(c) S.Chams_Color = c end })
+
+    -- ============ MISC ============
+    local miscTab = library:addTab("Misc")
+    local gMisc = miscTab:createGroup("left", "Misc")
+    tg(gMisc, "Watermark", "Watermark_Enabled", function() return S.Watermark_Enabled end, function(b) S.Watermark_Enabled = b end)
+    tg(gMisc, "Tracers", "Tracers_Enabled", function() return S.Tracers_Enabled end, function(b) S.Tracers_Enabled = b end)
+    gMisc:addButton({ text = "Unload", callback = function()
+        pcall(function()
+            if deps.Main and deps.Main.Unload then deps.Main.Unload()
+            elseif getgenv().PastaUnload then getgenv().PastaUnload() end
+        end)
+        pcall(function() if library.gui then library.gui:Destroy() end end)
+    end })
+
+    -- синк тоглов из конфига (seere стартует все ВЫКЛ)
+    for _, pair in ipairs(togglesToSync) do
+        pcall(function()
+            local opt = library.options[pair[1]]
+            if opt and opt.changeState then opt.changeState(pair[2]() == true) end
+        end)
     end
 
-    -- ============ COMBAT / TRIGGER ============
-    local trigTab = window:tab({name = "Trigger"})
-    do
-        local col = trigTab:column()
-        local sec = col:section({name = "Triggerbot"})
+    -- открыть первую вкладку
+    pcall(function()
+        if library.tabs and library.tabs[1] then
+            for i, t in ipairs(library.tabs) do t.Visible = (i == 1) end
+        end
+    end)
 
-        sec:toggle({
-            name = "Enable Trigger",
-            flag = "Trigger_Enabled",
-            callback = function(bool) S.Trigger_Enabled = bool end,
-        })
-        sec:slider({
-            name = "Delay (ms)",
-            flag = "Trigger_Delay",
-            min = 0, max = 500, interval = 1,
-            default = S.Trigger_Delay,
-            callback = function(v) S.Trigger_Delay = v end,
-        })
-    end
-
-    -- ============ VISUALS / ENEMIES ============
-    local espTab = window:tab({name = "ESP"})
-    do
-        local col = espTab:column()
-        local genSec = col:section({name = "General", toggle = false})
-        genSec:toggle({
-            name = "Enable ESP",
-            flag = "Enabled",
-            callback = function(bool) S.ESP_Enabled = bool; ESPFlags["Enabled"] = bool; refresh() end,
-        })
-        genSec:slider({
-            name = "Max Distance",
-            flag = "ESP_MaxDistance",
-            min = 100, max = 5000, interval = 10,
-            default = S.ESP_MaxDistance,
-            callback = function(v) S.ESP_MaxDistance = v end,
-        })
-
-        genSec:toggle({
-            name = "Names",
-            flag = "Names",
-            callback = function(bool) ESPFlags["Names"] = bool; refresh() end,
-        }):colorpicker({
-            name = "Name Color",
-            flag = "Name_Color",
-            color = ESPFlags["Name_Color"].Color,
-            callback = function(color) ESPFlags["Name_Color"].Color = color; refresh() end,
-        })
-
-        local boxToggle = genSec:toggle({
-            name = "Boxes",
-            flag = "Boxes",
-            callback = function(bool) ESPFlags["Boxes"] = bool; refresh() end,
-        })
-        boxToggle:colorpicker({
-            name = "Box Color",
-            flag = "Box_Color",
-            color = ESPFlags["Box_Color"].Color,
-            callback = function(color) ESPFlags["Box_Color"].Color = color; refresh() end,
-        })
-
-        genSec:dropdown({
-            name = "Box Type",
-            flag = "Box_Type",
-            items = {"Corner", "Full"},
-            default = "Corner",
-            callback = function(v) ESPFlags["Box_Type"] = v; refresh() end,
-        })
-
-        local hpToggle = genSec:toggle({
-            name = "Healthbar",
-            flag = "Healthbar",
-            callback = function(bool) ESPFlags["Healthbar"] = bool; refresh() end,
-        })
-        hpToggle:colorpicker({
-            name = "High HP",
-            flag = "Health_High",
-            color = ESPFlags["Health_High"].Color,
-            callback = function(color) ESPFlags["Health_High"].Color = color end,
-        })
-        hpToggle:colorpicker({
-            name = "Low HP",
-            flag = "Health_Low",
-            color = ESPFlags["Health_Low"].Color,
-            callback = function(color) ESPFlags["Health_Low"].Color = color end,
-        })
-
-        genSec:toggle({
-            name = "Distance",
-            flag = "Distance",
-            callback = function(bool) ESPFlags["Distance"] = bool; refresh() end,
-        }):colorpicker({
-            name = "Distance Color",
-            flag = "Distance_Color",
-            color = ESPFlags["Distance_Color"].Color,
-            callback = function(color) ESPFlags["Distance_Color"].Color = color; refresh() end,
-        })
-
-        genSec:toggle({
-            name = "Weapon",
-            flag = "Weapon",
-            callback = function(bool) ESPFlags["Weapon"] = bool; refresh() end,
-        }):colorpicker({
-            name = "Weapon Color",
-            flag = "Weapon_Color",
-            color = ESPFlags["Weapon_Color"].Color,
-            callback = function(color) ESPFlags["Weapon_Color"].Color = color; refresh() end,
-        })
-    end
-
-    -- ============ VISUALS / TEAMMATES ============
-    local tmTab = window:tab({name = "Team"})
-    do
-        local col = tmTab:column()
-        local sec, colors = col:multi_section({names = {"Teammates", "Colors"}})
-
-        sec:toggle({
-            name = "Enable Teammates ESP",
-            flag = "Teammates_Enabled",
-            callback = function(bool) S.Teammates_Enabled = bool; refresh() end,
-        })
-        sec:colorpicker({
-            name = "Box Color",
-            flag = "Teammate_Box_Color",
-            color = S.Teammate_Box_Color,
-            callback = function(color) S.Teammate_Box_Color = color; refresh() end,
-        })
-        sec:colorpicker({
-            name = "Name Color",
-            flag = "Teammate_Name_Color",
-            color = S.Teammate_Name_Color,
-            callback = function(color) S.Teammate_Name_Color = color; refresh() end,
-        })
-        sec:colorpicker({
-            name = "Weapon Color",
-            flag = "Teammate_Weapon_Color",
-            color = S.Teammate_Weapon_Color,
-            callback = function(color) S.Teammate_Weapon_Color = color; refresh() end,
-        })
-
-        colors:colorpicker({
-            name = "Health High",
-            flag = "Teammate_Health_High",
-            color = S.Teammate_Health_High,
-            callback = function(color) S.Teammate_Health_High = color end,
-        })
-        colors:colorpicker({
-            name = "Health Low",
-            flag = "Teammate_Health_Low",
-            color = S.Teammate_Health_Low,
-            callback = function(color) S.Teammate_Health_Low = color end,
-        })
-        colors:colorpicker({
-            name = "Distance Color",
-            flag = "Teammate_Distance_Color",
-            color = S.Teammate_Distance_Color,
-            callback = function(color) S.Teammate_Distance_Color = color; refresh() end,
-        })
-    end
-
-    -- ============ VISUALS / SELF ============
-    local selfTab = window:tab({name = "Self"})
-    do
-        local col = selfTab:column()
-        local sec, matSec = col:multi_section({names = {"Self ESP", "Self Material"}})
-
-        sec:toggle({
-            name = "Enable Self ESP",
-            flag = "SelfESP_Enabled",
-            callback = function(bool) S.SelfESP_Enabled = bool; refresh() end,
-        })
-        sec:colorpicker({
-            name = "Box Color",
-            flag = "Self_Box_Color",
-            color = S.Self_Box_Color,
-            callback = function(color) S.Self_Box_Color = color; refresh() end,
-        })
-        sec:colorpicker({
-            name = "Name Color",
-            flag = "Self_Name_Color",
-            color = S.Self_Name_Color,
-            callback = function(color) S.Self_Name_Color = color; refresh() end,
-        })
-        sec:colorpicker({
-            name = "Weapon Color",
-            flag = "Self_Weapon_Color",
-            color = S.Self_Weapon_Color,
-            callback = function(color) S.Self_Weapon_Color = color; refresh() end,
-        })
-
-        matSec:toggle({
-            name = "Enable Self Material",
-            flag = "SelfChams_Enabled",
-            callback = function(bool)
-                S.SelfChams_Enabled = bool
-                if not bool then pcall(function() deps.Chams.RestoreSelf() end) end
-            end,
-        })
-        matSec:dropdown({
-            name = "Material",
-            flag = "SelfChams_Material",
-            items = {"ForceField", "Neon", "SmoothPlastic", "Plastic", "Glass"},
-            default = "ForceField",
-            callback = function(v) S.SelfChams_Material = v end,
-        })
-        matSec:colorpicker({
-            name = "Color",
-            flag = "SelfChams_Color",
-            color = S.SelfChams_Color,
-            callback = function(color) S.SelfChams_Color = color end,
-        })
-    end
-
-    -- ============ WORLD / LIGHTING ============
-    local worldTab = window:tab({name = "World"})
-    do
-        local col = worldTab:column()
-        local lightSec, chamsSec = col:multi_section({names = {"Lighting", "Highlights"}})
-
-        lightSec:toggle({
-            name = "Fullbright",
-            flag = "Fullbright_Enabled",
-            callback = function(bool) S.Fullbright_Enabled = bool end,
-        })
-        lightSec:toggle({
-            name = "Ambient",
-            flag = "Ambient_Enabled",
-            callback = function(bool) S.Ambient_Enabled = bool end,
-        })
-        lightSec:colorpicker({
-            name = "Ambient Color",
-            flag = "Ambient_Color",
-            color = S.Ambient_Color,
-            callback = function(color) S.Ambient_Color = color end,
-        })
-
-        chamsSec:toggle({
-            name = "Enemy Highlights",
-            flag = "Chams_Enabled",
-            callback = function(bool)
-                S.Chams_Enabled = bool
-                if not bool then pcall(function() deps.Chams.RestoreHighlights() end) end
-            end,
-        })
-        chamsSec:colorpicker({
-            name = "Highlight Color",
-            flag = "Chams_Color",
-            color = S.Chams_Color,
-            callback = function(color) S.Chams_Color = color end,
-        })
-        chamsSec:toggle({
-            name = "Watermark",
-            flag = "Watermark_Enabled",
-            callback = function(bool) S.Watermark_Enabled = bool end,
-        })
-        chamsSec:toggle({
-            name = "Tracers",
-            flag = "Tracers_Enabled",
-            callback = function(bool) S.Tracers_Enabled = bool end,
-        })
-        chamsSec:button({
-            name = "Unload",
-            callback = function()
-                pcall(function()
-                    if deps.Main and deps.Main.Unload then deps.Main.Unload()
-                    elseif getgenv().PastaUnload then getgenv().PastaUnload() end
-                end)
-                pcall(function() library:set_menu_visibility(false) end)
-            end,
-        })
-    end
-
-    return window
+    return library
 end
 
 return UI

@@ -1,14 +1,15 @@
--- loader.lua — полный запуск PastaSense + Atlanta UI
+-- loader.lua — полный запуск PastaSense + Seere UI
 
 local BASE = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/modules/"
 local UI_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/ui.lua"
+local LIB_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/seere.lua"
 
 -- выгрузка прошлой копии
 pcall(function()
     if getgenv().PastaUnload then getgenv().PastaUnload() end
 end)
 
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/i77lhm/Libraries/refs/heads/main/Atlanta/Library.lua"))()
+local library = loadstring(game:HttpGet(LIB_URL))()
 local Config = loadstring(game:HttpGet(BASE .. "config.lua"))()
 local Services = loadstring(game:HttpGet(BASE .. "services.lua"))()
 local AimbotMod = loadstring(game:HttpGet(BASE .. "aimbot.lua"))()
