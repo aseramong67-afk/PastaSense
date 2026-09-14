@@ -1,16 +1,18 @@
 -- example.lua — демо PastaSenseUI 1в1 как на скриншоте
--- Запуск в executor:
---   local Lib = loadstring(game:HttpGet("RAW_URL_СЮДА/PastaSenseUI.lua"))()
---   loadstring(game:HttpGet("RAW_URL_СЮДА/example.lua"))()
--- Локальный тест (оба файла рядом):
---   local Lib = loadstring(readfile("PastaSenseUI.lua"))()
+--
+-- Вариант A — executor (Wave/Solara/Delta): выполнить одной строкой:
+--   loadstring(game:HttpGet("https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/example.lua"))()
+--
+-- Вариант B — Roblox Studio (без loadstring):
+--   1) Создай ModuleScript с именем "PastaSenseUI", вставь в него ВЕСЬ текст PastaSenseUI.lua
+--      (положи в ReplicatedStorage),
+--   2) Создай LocalScript в StarterPlayer > StarterPlayerScripts, вставь в него ЭТОТ файл,
+--   3) Нажми Play. Этот скрипт сам найдёт модуль через require.
 
 local LibUrls = {
 	"https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/PastaSenseUI.lua",
 }
 
--- качаем любым доступным способом: executor game:HttpGet,
--- HttpGetAsync (Studio с включённым HTTP), request-style API.
 -- Доступ к globals через rawget(_G,...), чтобы не триггерить Script Analysis.
 local G = (type(rawget(_G, "getgenv")) == "function" and rawget(_G, "getgenv")()) or _G
 local synT = rawget(G, "syn")
@@ -36,46 +38,87 @@ local function httpGet(url)
 	return nil, nil
 end
 
-local compileFn = rawget(G, "loadstring")
-if type(compileFn) ~= "function" then
-	error("[pastasense] нет loadstring — нужен executor (Wave/Solara/Delta) или Studio")
-end
-
-local Lib
-do
+-- Путь 1: executor — скачать исходник и скомпилировать через loadstring
+local function loadViaHttp()
+	local compileFn = rawget(G, "loadstring")
+	if type(compileFn) ~= "function" then return nil, "нет loadstring" end
 	local lastErr = "no urls tried"
 	for _, url in ipairs(LibUrls) do
 		local src, used = httpGet(url)
 		if not src then
-			lastErr = "скачивание не удалось (game:HttpGet/HttpGetAsync/request недоступны). Studio: Game Settings -> Security -> включить HTTP Requests, запускать через Play"
+			lastErr = "скачивание не удалось"
 		else
-			print(("[pastasense] скачано через %s, байт: %d, начало: %s"):format(
-				tostring(used), #src, string.sub(string.gsub(src, "%c", "?"), 1, 80)))
+			print(("[pastasense] скачано через %s, байт: %d"):format(tostring(used), #src))
 			local fn, cerr = compileFn(src)
 			if not fn then
-				lastErr = "loadstring отказался компилировать (" .. tostring(used) .. "): " .. tostring(cerr)
+				lastErr = "loadstring отказался компилировать: " .. tostring(cerr)
 			else
 				local ok, res = pcall(fn)
-				if ok and res then
-					Lib = res
-					break
-				else
-					lastErr = "ошибка запуска библиотеки: " .. tostring(res)
+				if ok and res then return res, nil end
+				lastErr = "ошибка запуска библиотеки: " .. tostring(res)
+			end
+		end
+	end
+	return nil, lastErr
+end
+
+-- Путь 2: Studio — найти ModuleScript "PastaSenseUI" и require
+local function loadViaRequire()
+	local roots = {}
+	pcall(function() table.insert(roots, game:GetService("ReplicatedStorage")) end)
+	pcall(function() table.insert(roots, game:GetService("StarterPack")) end)
+	pcall(function()
+		local plrs = game:GetService("Players")
+		local lp = plrs.LocalPlayer
+		if lp then
+			table.insert(roots, lp:WaitForChild("PlayerScripts"))
+			table.insert(roots, lp:WaitForChild("PlayerGui"))
+		end
+	end)
+	if script then
+		pcall(function() table.insert(roots, script.Parent) end)
+	end
+	for _, root in ipairs(roots) do
+		if root then
+			for _, d in ipairs(root:GetDescendants()) do
+				if d:IsA("ModuleScript") and d.Name == "PastaSenseUI" then
+					local ok, res = pcall(require, d)
+					if ok and res then return res, nil end
+					return nil, "require упал: " .. tostring(res)
 				end
 			end
 		end
 	end
-	if not Lib then
-		error("[pastasense] не смог загрузить библиотеку. URL: "
-			.. table.concat(LibUrls, ", ")
-			.. " | ошибка: " .. tostring(lastErr))
+	return nil, "ModuleScript 'PastaSenseUI' не найден"
+end
+
+local Lib, httpErr = loadViaHttp()
+local reqErr
+if not Lib then
+	Lib, reqErr = loadViaRequire()
+end
+if not Lib then
+	error("[pastasense] библиотека не загрузилась.\n"
+		.. "HTTP путь: " .. tostring(httpErr) .. "\n"
+		.. "Require путь: " .. tostring(reqErr) .. "\n"
+		.. "Executor: просто выполни loadstring-строку из шапки файла.\n"
+		.. "Studio: вставь PastaSenseUI.lua в ModuleScript 'PastaSenseUI' в ReplicatedStorage, "
+		.. "этот файл — в LocalScript в StarterPlayerScripts, нажми Play.")
+end
+
+-- GUI строится только на клиенте
+do
+	local okIsClient, isClient = pcall(function() return game:GetService("RunService"):IsClient() end)
+	if okIsClient and isClient == false then
+		error("[pastasense] этот скрипт должен выполняться на клиенте: используй LocalScript (StarterPlayerScripts), а не Script.")
 	end
 end
 
 -- выгрузка прошлой копии
-pcall(function()
-	if getgenv().PastaUnload then getgenv().PastaUnload() end
-end)
+do
+	local oldUnload = rawget(G, "PastaUnload")
+	if type(oldUnload) == "function" then pcall(oldUnload) end
+end
 
 local Win = Lib:CreateWindow({
 	Name = "pastasense",
