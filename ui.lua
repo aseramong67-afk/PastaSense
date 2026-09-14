@@ -43,7 +43,7 @@ function UI.Build(deps, library)
     do
         local leftCol = aimPage:column({})
         local rightCol = aimPage:column({})
-        local section = leftCol:section({ name = "Aimbot", default = true, size = 0.6 })
+        local section = leftCol:section({ name = "Aimbot", default = true, size = 0.45 })
 
         section:toggle({
             name = "Enable Aimbot",
@@ -97,7 +97,7 @@ function UI.Build(deps, library)
             callback = function(v) S.Hitbox = v end,
         })
 
-        local tuning = rightCol:section({ name = "Tuning", default = true, size = 0.6 })
+        local tuning = rightCol:section({ name = "Tuning", default = true, size = 0.45 })
 
         tuning:slider({
             name = "Smoothing",
