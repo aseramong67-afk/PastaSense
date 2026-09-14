@@ -357,6 +357,33 @@ function UI.Build(deps, library)
             callback = function(color) S.Self_Weapon_Color = color; refresh() end,
         })
 
+        local selfMat = rightCol:section({ name = "Self Material", default = true, size = 0.5 })
+        selfMat:toggle({
+            name = "Enable Self Material",
+            default = S.SelfChams_Enabled,
+            seperator = true,
+            type = "toggle",
+            callback = function(bool)
+                S.SelfChams_Enabled = bool
+                if not bool then
+                    pcall(function() deps.Chams.RestoreSelf() end)
+                end
+            end,
+        })
+        dropdown(selfMat, {
+            name = "Material",
+            items = { "ForceField", "Neon", "SmoothPlastic", "Plastic", "Glass" },
+            default = S.SelfChams_Material,
+            seperator = true,
+            callback = function(v) S.SelfChams_Material = v end,
+        })
+        selfMat:colorpicker({
+            name = "Color",
+            color = S.SelfChams_Color,
+            seperator = false,
+            callback = function(color) S.SelfChams_Color = color end,
+        })
+
         local colors3 = rightCol:section({ name = "Health Colors", default = true, size = 0.5 })
         colors3:colorpicker({
             name = "Health High",
@@ -381,7 +408,7 @@ function UI.Build(deps, library)
     -- ============ WORLD ============
     window:seperator({ name = "World" })
 
-    local lightingPage, chamsPage, miscPage = window:tab({ name = "World", tabs = { "Lighting", "Chams", "Misc" } })
+    local lightingPage, highlightsPage, miscPage = window:tab({ name = "World", tabs = { "Lighting", "Highlights", "Misc" } })
 
     do
         local leftCol = lightingPage:column({})
@@ -412,60 +439,26 @@ function UI.Build(deps, library)
     end
 
     do
-        local leftCol = chamsPage:column({})
-        local rightCol = chamsPage:column({})
-        local section = leftCol:section({ name = "Enemy Chams", default = true, size = 0.5 })
+        local leftCol = highlightsPage:column({})
+        local rightCol = highlightsPage:column({})
+        local section = leftCol:section({ name = "Highlights", default = true, size = 0.5 })
         section:toggle({
-            name = "Enable Chams",
+            name = "Enemy Highlights",
             default = S.Chams_Enabled,
             seperator = true,
             type = "toggle",
             callback = function(bool)
                 S.Chams_Enabled = bool
-                if not bool and not S.SelfChams_Enabled then
-                    pcall(function() deps.Chams.Restore() end)
+                if not bool then
+                    pcall(function() deps.Chams.RestoreHighlights() end)
                 end
             end,
         })
-        dropdown(section, {
-            name = "Material",
-            items = { "ForceField", "Neon", "SmoothPlastic", "Plastic", "Glass" },
-            default = S.Chams_Material,
-            seperator = true,
-            callback = function(v) S.Chams_Material = v end,
-        })
         section:colorpicker({
-            name = "Chams Color",
+            name = "Highlight Color",
             color = S.Chams_Color,
             seperator = false,
             callback = function(color) S.Chams_Color = color end,
-        })
-
-        local selfChams = rightCol:section({ name = "Self Chams", default = true, size = 0.5 })
-        selfChams:toggle({
-            name = "Self Chams",
-            default = S.SelfChams_Enabled,
-            seperator = true,
-            type = "toggle",
-            callback = function(bool)
-                S.SelfChams_Enabled = bool
-                if not bool and not S.Chams_Enabled then
-                    pcall(function() deps.Chams.Restore() end)
-                end
-            end,
-        })
-        dropdown(selfChams, {
-            name = "Material",
-            items = { "ForceField", "Neon", "SmoothPlastic", "Plastic", "Glass" },
-            default = S.SelfChams_Material,
-            seperator = true,
-            callback = function(v) S.SelfChams_Material = v end,
-        })
-        selfChams:colorpicker({
-            name = "Self Color",
-            color = S.SelfChams_Color,
-            seperator = false,
-            callback = function(color) S.SelfChams_Color = color end,
         })
     end
 
