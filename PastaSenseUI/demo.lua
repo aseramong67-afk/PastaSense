@@ -2,7 +2,7 @@
 -- Запуск в инжекторе одной строкой:
 --   loadstring(game:HttpGet("https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/demo.lua"))()
 
-local LIB_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/PastaSenseUI.lua?v=1.1.0"
+local LIB_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/PastaSenseUI.lua?v=1.2.0"
 
 local function fetch(url)
 	local ok, res = pcall(function() return game:HttpGet(url) end)
@@ -36,12 +36,15 @@ local Win = Lib:CreateWindow({
 })
 
 -- ================= RAGE (главный скрин) =================
--- Иконки: можно PNG-URL (скачается в workspace инжектора: PastaSenseUI/icons/),
--- rbxassetid или текстовый глиф. SVG напрямую нельзя — только PNG.
--- 1) Предзагрузка (файлы появятся в workspace после первого запуска):
--- Lib:PreloadIcons({ rage = "https://.../rage.png", pistols = "https://.../pistol.png" })
--- 2) Использование:
--- local Rage = Win:AddTab({ Name = "rage", Icon = "https://.../rage.png" })
+-- Иконки (3 способа, SVG напрямую нельзя — только PNG):
+-- 1) PNG-URL — скачается в workspace инжектора (PastaSenseUI/icons/):
+--      Icon = "https://.../rage.png"
+-- 2) Base64 текстом — PNG закодировать (certutil -encode icon.png icon.txt
+--    или онлайн-конвертер), вставить строкой, файл тоже ляжет в workspace:
+--      Icon = "base64:iVBORw0KGgo..."
+--    или Icon = { Base64 = "iVBORw0KGgo..." }
+-- 3) Decal из Roblox: Icon = "rbxassetid://123456789"
+-- Предзагрузка: Lib:PreloadIcons({ rage = "https://.../rage.png" })
 local Rage = Win:AddTab({ Name = "rage", Icon = "+" })
 -- пример с картинками:
 -- local Rage = Win:AddTab({ Name = "rage", Icon = "rbxassetid://123456789" })

@@ -11,7 +11,7 @@
 
 local PastaSenseUI = {}
 PastaSenseUI.__index = PastaSenseUI
-PastaSenseUI.Version = "1.1.0"
+PastaSenseUI.Version = "1.2.0"
 PastaSenseUI.Flags = {} -- flag -> { Value = any, Set = fn }
 
 -- // Services
@@ -122,20 +122,18 @@ local function iconPathFor(key)
 	return ICON_FOLDER .. "/" .. (string.gsub(tostring(key), "[^%w_%-]", "_")) .. ".png"
 end
 
-local function fetchWorkspaceIcon(key, url)
-	if type(url) ~= "string" or string.sub(url, 1, 4) ~= "http" then return nil end
-	if typeof(getcustomasset) ~= "function" then return nil end
+-- Пишет PNG-байты в workspace и возвращает custom asset путь (или nil).
+local function saveIconBytes(key, data)
+	if type(data) ~= "string" or #data == 0 then return nil end
+	if typeof(getcustomasset) ~= "function" or typeof(writefile) ~= "function" then return nil end
 	local path = iconPathFor(key)
-	local needDownload = true
+	local exists = false
 	pcall(function()
 		if typeof(isfile) == "function" and isfile(path) then
-			needDownload = false
+			exists = true
 		end
 	end)
-	if needDownload then
-		if typeof(writefile) ~= "function" then return nil end
-		local ok, data = pcall(function() return game:HttpGet(url) end)
-		if not ok or type(data) ~= "string" or #data == 0 then return nil end
+	if not exists then
 		ensureIconFolder()
 		local wok = pcall(writefile, path, data)
 		if not wok then return nil end
@@ -145,14 +143,84 @@ local function fetchWorkspaceIcon(key, url)
 	return nil
 end
 
+local function fetchWorkspaceIcon(key, url)
+	if type(url) ~= "string" or string.sub(url, 1, 4) ~= "http" then return nil end
+	local ok, data = pcall(function() return game:HttpGet(url) end)
+	if not ok then return nil end
+	return saveIconBytes(key, data)
+end
+
+-- // Base64 иконки текстом: Icon = "base64:...." или { Base64 = "...." }.
+-- PNG в base64 ( certutil -encode in.png out.txt / любой онлайн-конвертер ),
+-- декодируем в байты, пишем в workspace, используем через getcustomasset.
+local B64ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+local B64D = {}
+for _bi = 1, #B64ABC do
+	B64D[string.sub(B64ABC, _bi, _bi)] = _bi - 1
+end
+
+local function base64Decode(data)
+	if type(data) ~= "string" then return nil end
+	data = string.gsub(data, "%s+", "")
+	if (#data % 4) ~= 0 then return nil end
+	local out = {}
+	local outN = 0
+	local i = 1
+	local len = #data
+	while i <= len do
+		local c = {}
+		local pad = 0
+		for j = 0, 3 do
+			local ch = string.sub(data, i + j, i + j)
+			if ch == "=" or ch == "" then
+				c[j + 1] = 0
+				pad = pad + 1
+			else
+				local v = B64D[ch]
+				if v == nil then return nil end
+				c[j + 1] = v
+			end
+		end
+		local n24 = c[1] * 262144 + c[2] * 4096 + c[3] * 64 + c[4]
+		outN = outN + 1
+		out[outN] = string.char(math.floor(n24 / 65536) % 256)
+		if pad < 2 then
+			outN = outN + 1
+			out[outN] = string.char(math.floor(n24 / 256) % 256)
+		end
+		if pad < 1 then
+			outN = outN + 1
+			out[outN] = string.char(n24 % 256)
+		end
+		i = i + 4
+	end
+	return table.concat(out)
+end
+
+local function base64WorkspaceIcon(key, b64)
+	if type(b64) ~= "string" then return nil end
+	if string.sub(b64, 1, 7) == "base64:" then
+		b64 = string.sub(b64, 8)
+	end
+	return saveIconBytes(key, base64Decode(b64))
+end
+
 -- Возвращает готовый Image-контент (asset id / custom asset) или nil.
 -- key нужен для имени файла в workspace.
 local function resolveIcon(icon, key)
 	if isImageIcon(icon) then
 		return normImage(icon)
 	end
-	if type(icon) == "string" and string.sub(icon, 1, 4) == "http" then
-		return fetchWorkspaceIcon(key or icon, icon)
+	if type(icon) == "table" and type(icon.Base64) == "string" then
+		return base64WorkspaceIcon(key or "icon", icon.Base64)
+	end
+	if type(icon) == "string" then
+		if string.sub(icon, 1, 7) == "base64:" then
+			return base64WorkspaceIcon(key or "icon", icon)
+		end
+		if string.sub(icon, 1, 4) == "http" then
+			return fetchWorkspaceIcon(key or icon, icon)
+		end
 	end
 	return nil
 end
@@ -1090,13 +1158,20 @@ function PastaSenseUI:CreateWindow(opts)
 	end
 
 	-- Предзагрузить иконки в workspace инжектора (папка PastaSenseUI/icons).
-	-- map: { rage = "https://.../rage.png", pistols = "https://.../pistol.png" }
+	-- map: { rage = "https://.../rage.png", ghost = "base64:...." }
 	-- Возвращает таблицу { key = assetPath }. Без writefile/getcustomasset вернёт пустую.
 	function PastaSenseUI:PreloadIcons(map)
 		local out = {}
 		if type(map) ~= "table" then return out end
-		for key, url in pairs(map) do
-			local asset = fetchWorkspaceIcon(key, url)
+		for key, v in pairs(map) do
+			local asset
+			if type(v) == "table" and type(v.Base64) == "string" then
+				asset = base64WorkspaceIcon(key, v.Base64)
+			elseif type(v) == "string" and string.sub(v, 1, 7) == "base64:" then
+				asset = base64WorkspaceIcon(key, v)
+			else
+				asset = fetchWorkspaceIcon(key, v)
+			end
 			if asset then out[key] = asset end
 		end
 		return out
@@ -1105,6 +1180,8 @@ function PastaSenseUI:CreateWindow(opts)
 	function PastaSenseUI:GetIcon(key, url)
 		return fetchWorkspaceIcon(key, url)
 	end
+
+	PastaSenseUI.Base64Decode = base64Decode
 
 	function Window:Destroy()
 		pcall(function() ScreenGui:Destroy() end)
