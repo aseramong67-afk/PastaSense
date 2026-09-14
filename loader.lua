@@ -9,15 +9,35 @@ pcall(function()
     if getgenv().PastaUnload then getgenv().PastaUnload() end
 end)
 
-local library = loadstring(game:HttpGet(LIB_URL))()
-local Config = loadstring(game:HttpGet(BASE .. "config.lua"))()
-local Services = loadstring(game:HttpGet(BASE .. "services.lua"))()
-local AimbotMod = loadstring(game:HttpGet(BASE .. "aimbot.lua"))()
-local ESPMod = loadstring(game:HttpGet(BASE .. "esp.lua"))()
-local EffectsMod = loadstring(game:HttpGet(BASE .. "effects.lua"))()
-local ChamsMod = loadstring(game:HttpGet(BASE .. "chams.lua"))()
-local MainMod = loadstring(game:HttpGet(BASE .. "main.lua"))()
-local UIMod = loadstring(game:HttpGet(UI_URL))()
+local function safeLoad(name, url)
+    local ok, mod = pcall(function()
+        return loadstring(game:HttpGet(url))()
+    end)
+    if not ok then
+        warn("[PastaSense] Failed to load " .. name .. ": " .. tostring(mod))
+        return nil
+    end
+    return mod
+end
+
+local library = safeLoad("library", LIB_URL)
+if not library then return end
+local Config = safeLoad("config", BASE .. "config.lua")
+if not Config then return end
+local Services = safeLoad("services", BASE .. "services.lua")
+if not Services then return end
+local AimbotMod = safeLoad("aimbot", BASE .. "aimbot.lua")
+if not AimbotMod then return end
+local ESPMod = safeLoad("esp", BASE .. "esp.lua")
+if not ESPMod then return end
+local EffectsMod = safeLoad("effects", BASE .. "effects.lua")
+if not EffectsMod then return end
+local ChamsMod = safeLoad("chams", BASE .. "chams.lua")
+if not ChamsMod then return end
+local MainMod = safeLoad("main", BASE .. "main.lua")
+if not MainMod then return end
+local UIMod = safeLoad("ui", UI_URL)
+if not UIMod then return end
 
 local connections = {}
 
