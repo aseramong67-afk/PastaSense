@@ -23,7 +23,7 @@ function ESP.New(S, ESPFlags, connections)
     end
     M.screengui = Instance.new("ScreenGui", guiParent)
     M.cache = Instance.new("ScreenGui", guiParent)
-    M.connections = {}
+
 
     M.screengui.IgnoreGuiInset = true
     M.screengui.Name = "\0"
@@ -119,7 +119,7 @@ function ESP.New(S, ESPFlags, connections)
 
     function esp:create(instance, options)
         local ins = Instance.new(instance)
-        for prop, value in options do
+        for prop, value in pairs(options) do
             if value ~= nil then
                 ins[prop] = value
             end
@@ -405,7 +405,7 @@ function ESP.New(S, ESPFlags, connections)
             FontFace = fonts.main;
             TextColor3 = ESPFlags["Distance_Color"].Color;
             BorderColor3 = rgb(0, 0, 0);
-            Text = "127st";
+            Text = "";
             Parent = ESPFlags["Distance"] and objects["holder"] or esp.cache;
             TextStrokeTransparency = 0;
             Name = "\0";
@@ -422,7 +422,7 @@ function ESP.New(S, ESPFlags, connections)
             FontFace = fonts.main;
             TextColor3 = ESPFlags["Weapon_Color"].Color;
             BorderColor3 = rgb(0, 0, 0);
-            Text = "[ak-47]";
+            Text = "";
             Parent = esp.cache;
             TextStrokeTransparency = 0;
             Name = "\0";
@@ -461,7 +461,9 @@ function ESP.New(S, ESPFlags, connections)
 
         data.tool_added = function(item)
             if not item:IsA("Tool") then return end
-            local exists = data.info.character:FindFirstChild(item.Name)
+            local char = data.info.character
+            if not char then return end
+            local exists = char:FindFirstChild(item.Name)
             objects["weapon"].Text = item.Name
             objects["weapon"].Parent = exists and objects["holder"] or esp.cache
         end
@@ -478,16 +480,21 @@ function ESP.New(S, ESPFlags, connections)
             end
         end
 
+        data.descendantConnections = {}
         data.refresh_descendants = function()
             local character = player.Character
             if not character then return end
             local humanoid = character:WaitForChild("Humanoid", 5)
             if not humanoid then return end
+            for _, c in ipairs(data.descendantConnections) do
+                pcall(function() c:Disconnect() end)
+            end
+            data.descendantConnections = {}
             data.info.character = character
             data.info.humanoid = humanoid
-            table.insert(connections, humanoid.HealthChanged:Connect(data.health_changed))
-            table.insert(connections, character.ChildAdded:Connect(data.tool_added))
-            table.insert(connections, character.ChildRemoved:Connect(data.tool_added))
+            table.insert(data.descendantConnections, humanoid.HealthChanged:Connect(data.health_changed))
+            table.insert(data.descendantConnections, character.ChildAdded:Connect(data.tool_added))
+            table.insert(data.descendantConnections, character.ChildRemoved:Connect(data.tool_added))
             data.health_changed(data.info.humanoid.Health)
         end
 
@@ -536,8 +543,15 @@ function ESP.New(S, ESPFlags, connections)
                 distCR = ESPFlags["Distance_Color"].Color
                 wepCR = ESPFlags["Weapon_Color"].Color
             end
-            local anyEsp = S.ESP_Enabled or S.Teammates_Enabled or S.SelfESP_Enabled
-            objects.holder.Parent = anyEsp and esp.screengui or esp.cache
+            local showHolder
+            if isSelfR then
+                showHolder = S.SelfESP_Enabled
+            elseif sameTeamR then
+                showHolder = S.Teammates_Enabled
+            else
+                showHolder = S.ESP_Enabled
+            end
+            objects.holder.Parent = showHolder and esp.screengui or esp.cache
 
             objects["name"].Parent = ESPFlags["Names"] and objects["holder"] or esp.cache
             objects["name"].TextColor3 = nameCR
