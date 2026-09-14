@@ -1,4 +1,4 @@
--- ui.lua — Seere UI + привязка модулей PastaSense (полная переработка)
+-- ui.lua вЂ” Splix UI + PastaSense module binding
 
 local UI = {}
 
@@ -8,234 +8,654 @@ function UI.Build(deps, library)
     local esp = deps.ESP
     local chams = deps.Chams
 
-    -- ── helpers ────────────────────────────────────────────────────
-    local syncList = {}
-
-    local function call(fn, ...)
-        return pcall(fn, ...)
+    local function safe(...)
+        return pcall(...)
     end
 
     local function refresh()
-        call(esp.refresh_elements, esp)
+        safe(esp.refresh_elements, esp)
     end
 
-    local function safe(group, method, props)
-        local ok, obj = call(group[method], group, props)
-        return ok and obj or nil
-    end
+    local window = library:New({ Name = "PastaSense", Accent = Color3.fromRGB(155, 150, 219) })
 
-    local function toggle(group, text, flag, set)
-        local t = safe(group, "addToggle", { text = text, flag = flag, callback = set })
-        if not t then return nil end
-        syncList[#syncList + 1] = { flag = flag }
-        return t
-    end
+    -- в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+    -- COMBAT TAB
+    -- в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+    local combatPage = window:Page({ Name = "Combat" })
 
-    local function toggleColor(group, text, flag, set, cFlag, cDefault, cSet)
-        local t = toggle(group, text, flag, set)
-        if not t then return end
-        safe(t, "addColorpicker", { flag = cFlag, color = cDefault, callback = cSet })
-    end
+    -- Left: Aimbot
+    local aim = combatPage:Section({ Name = "Aimbot", Side = "left" })
 
-    local function slider(group, text, flag, min, max, val, set, suffix)
-        safe(group, "addSlider", {
-            text = text, flag = flag,
-            min = min, max = max, value = val,
-            callback = set,
-        }, suffix)
-    end
-
-    local function color(group, text, flag, col, set)
-        safe(group, "addColorpicker", {
-            text = text, flag = flag, color = col, callback = set,
-        })
-    end
-
-    local function list(group, text, flag, values, val, set)
-        safe(group, "addList", {
-            text = text, flag = flag,
-            values = values, value = val, callback = set,
-        })
-    end
-
-    local function btn(group, text, set)
-        safe(group, "addButton", { text = text, callback = set })
-    end
-
-    local function bind(group, text, flag, key)
-        safe(group, "addKeybind", { text = text, flag = flag, key = key })
-    end
-
-    -- ── COMBAT ─────────────────────────────────────────────────────
-    local combat = library:addTab("Combat")
-
-    local aim = combat:createGroup("left", "Aimbot")
-    toggle(aim, "Enable Aimbot", "Aimbot_Enabled", function(b) S.Aimbot_Enabled = b end)
-    toggle(aim, "Wall Check", "Aimbot_WallCheck", function(b) S.Aimbot_WallCheck = b end)
-    toggle(aim, "Toggle Mode", "Aimbot_ToggleMode", function(b) S.Aimbot_ToggleMode = b end)
-    toggle(aim, "Team Check", "TeamCheck", function(b) S.TeamCheck = b end)
-    toggle(aim, "Death Check", "DeathCheck", function(b) S.DeathCheck = b end)
-    toggle(aim, "Show FOV", "Show_FOV", function(b) S.Show_FOV = b end)
-    list(aim, "Hitbox", "Hitbox", {"Head","Torso","Random"}, S.Hitbox, function(v) S.Hitbox = v end)
-
-    local trig = combat:createGroup("center", "Triggerbot")
-    toggle(trig, "Enable Trigger", "Trigger_Enabled", function(b) S.Trigger_Enabled = b end)
-    slider(trig, "Delay", "Trigger_Delay", 0, 500, S.Trigger_Delay, function(v) S.Trigger_Delay = v end, "ms")
-
-    local tune = combat:createGroup("right", "Tuning")
-    slider(tune, "Smoothing", "Aim_Smoothing", 0, 100, math.floor(S.Aim_Smoothing * 100 + 0.5),
-        function(v) S.Aim_Smoothing = v / 100 end, "%")
-    slider(tune, "FOV", "Aim_FOV", 10, 800, S.Aim_FOV_Hold,
-        function(v) S.Aim_FOV_Hold = v; S.Aim_FOV_Toggle = v end, "")
-    slider(tune, "Max Distance", "Aim_MaxDist", 100, 5000, S.Aim_MaxDistance,
-        function(v) S.Aim_MaxDistance = v end, "")
-    color(tune, "Lock Color", "Aimbot_LockColor", S.Aimbot_LockColor,
-        function(c) S.Aimbot_LockColor = c end)
-
-    -- ── VISUALS ────────────────────────────────────────────────────
-    local vis = library:addTab("Visuals")
-
-    -- левая: enemies
-    local gen = vis:createGroup("left", "General")
-    toggle(gen, "Enable ESP", "ESP_Enabled", function(b)
-        S.ESP_Enabled = b; F["Enabled"] = b; refresh()
-    end)
-    slider(gen, "Max Distance", "ESP_MaxDist", 100, 5000, S.ESP_MaxDistance,
-        function(v) S.ESP_MaxDistance = v end, "")
-
-    local el = vis:createGroup("left", "Elements")
-
-    toggleColor(el, "Names", "ESP_Names", function(b) F["Names"] = b; refresh() end,
-        "ESP_Name_Color", F["Name_Color"].Color, function(c) F["Name_Color"].Color = c; refresh() end)
-
-    toggleColor(el, "Boxes", "ESP_Boxes", function(b) F["Boxes"] = b; refresh() end,
-        "ESP_Box_Color", F["Box_Color"].Color, function(c) F["Box_Color"].Color = c; refresh() end)
-
-    local hpToggle = toggle(el, "Healthbar", "ESP_Healthbar", function(b) F["Healthbar"] = b; refresh() end)
-    if hpToggle then
-        color(hpToggle, "High HP", "ESP_Health_High", F["Health_High"].Color,
-            function(c) F["Health_High"].Color = c end)
-        color(hpToggle, "Low HP", "ESP_Health_Low", F["Health_Low"].Color,
-            function(c) F["Health_Low"].Color = c end)
-    end
-
-    toggleColor(el, "Distance", "ESP_Distance", function(b) F["Distance"] = b; refresh() end,
-        "ESP_Distance_Color", F["Distance_Color"].Color, function(c) F["Distance_Color"].Color = c; refresh() end)
-
-    toggleColor(el, "Weapon", "ESP_Weapon", function(b) F["Weapon"] = b; refresh() end,
-        "ESP_Weapon_Color", F["Weapon_Color"].Color, function(c) F["Weapon_Color"].Color = c; refresh() end)
-
-    -- центр: style + teammates + misc
-    local style = vis:createGroup("center", "Style")
-    list(style, "Box Type", "ESP_Box_Type", {"Corner","Full"}, F["Box_Type"],
-        function(v) F["Box_Type"] = v; refresh() end)
-
-    local tm = vis:createGroup("center", "Teammates")
-    toggle(tm, "Enable Teammates", "Teammates_Enabled", function(b) S.Teammates_Enabled = b; refresh() end)
-
-    local tmC = vis:createGroup("center", "Team Colors")
-    color(tmC, "Box", "Tm_Box", S.Teammate_Box_Color, function(c) S.Teammate_Box_Color = c; refresh() end)
-    color(tmC, "Name", "Tm_Name", S.Teammate_Name_Color, function(c) S.Teammate_Name_Color = c; refresh() end)
-    color(tmC, "Weapon", "Tm_Weapon", S.Teammate_Weapon_Color, function(c) S.Teammate_Weapon_Color = c; refresh() end)
-    color(tmC, "HP High", "Tm_High", S.Teammate_Health_High, function(c) S.Teammate_Health_High = c end)
-    color(tmC, "HP Low", "Tm_Low", S.Teammate_Health_Low, function(c) S.Teammate_Health_Low = c end)
-    color(tmC, "Distance", "Tm_Dist", S.Teammate_Distance_Color, function(c) S.Teammate_Distance_Color = c; refresh() end)
-
-    local miscV = vis:createGroup("center", "Misc")
-    toggle(miscV, "Watermark", "Watermark_Enabled", function(b) S.Watermark_Enabled = b end)
-    toggle(miscV, "Tracers", "Tracers_Enabled", function(b) S.Tracers_Enabled = b end)
-
-    -- правая: self + world
-    local self = vis:createGroup("right", "Self")
-    toggle(self, "Enable Self ESP", "SelfESP_Enabled", function(b) S.SelfESP_Enabled = b; refresh() end)
-    color(self, "Box", "Self_Box", S.Self_Box_Color, function(c) S.Self_Box_Color = c; refresh() end)
-    color(self, "Name", "Self_Name", S.Self_Name_Color, function(c) S.Self_Name_Color = c; refresh() end)
-    color(self, "Weapon", "Self_Weapon", S.Self_Weapon_Color, function(c) S.Self_Weapon_Color = c; refresh() end)
-
-    local mat = vis:createGroup("right", "Self Material")
-    toggle(mat, "Enable Material", "SelfChams_Enabled", function(b)
-        S.SelfChams_Enabled = b
-        if not b then call(chams.RestoreSelf, chams) end
-    end)
-    list(mat, "Material", "SelfChams_Material",
-        {"ForceField","Neon","SmoothPlastic","Plastic","Glass"}, S.SelfChams_Material,
-        function(v) S.SelfChams_Material = v end)
-    color(mat, "Color", "SelfChams_Color", S.SelfChams_Color,
-        function(c) S.SelfChams_Color = c end)
-
-    local light = vis:createGroup("right", "Lighting")
-    toggle(light, "Fullbright", "Fullbright_Enabled", function(b) S.Fullbright_Enabled = b end)
-    toggle(light, "Ambient", "Ambient_Enabled", function(b) S.Ambient_Enabled = b end)
-    color(light, "Ambient Color", "Ambient_Color", S.Ambient_Color,
-        function(c) S.Ambient_Color = c end)
-
-    local chamsG = vis:createGroup("right", "Highlights")
-    toggle(chamsG, "Enemy Highlights", "Chams_Enabled", function(b)
-        S.Chams_Enabled = b
-        if not b then call(chams.RestoreHighlights, chams) end
-    end)
-    color(chamsG, "Color", "Chams_Color", S.Chams_Color,
-        function(c) S.Chams_Color = c end)
-
-    -- ── SETTINGS ───────────────────────────────────────────────────
-    local set = library:addTab("Settings")
-    local menu = set:createGroup("left", "Menu")
-    bind(menu, "Menu Bind", "MenuBind", Enum.KeyCode.RightShift)
-    color(menu, "Accent", "MenuAccent", Color3.fromRGB(155, 150, 219), function(c)
-        call(function()
-            local old = library.libColor
-            library.libColor = c
-            if library.gui then
-                for _, ins in ipairs(library.gui:GetDescendants()) do
-                    if ins:IsA("GuiObject") and ins.BackgroundColor3 == old then
-                        ins.BackgroundColor3 = c
-                    end
-                end
-            end
-        end)
-    end)
-    btn(menu, "Unload", function()
-        call(function()
-            if deps.Main and deps.Main.Unload then deps.Main.Unload()
-            elseif getgenv().PastaUnload then getgenv().PastaUnload() end
-        end)
-        call(function()
-            game:GetService("UserInputService").MouseBehavior =
-                getgenv().PastaMouseBehavior or Enum.MouseBehavior.LockCenter
-        end)
-        call(function() if library.gui then library.gui:Destroy() end end)
-    end)
-
-    -- ── sync + init ────────────────────────────────────────────────
-    for _, entry in ipairs(syncList) do
-        call(function()
-            local opt = library.options[entry.flag]
-            if opt and opt.changeState then opt.changeState(false) end
-        end)
-    end
-
-    pcall(function()
-        if library.tabs and library.tabs[1] then
-            for i, t in ipairs(library.tabs) do t.Visible = (i == 1) end
+    aim:Toggle({
+        Name = "Enable Aimbot",
+        Default = S.Aimbot_Enabled,
+        Pointer = "Aimbot_Enabled",
+        Callback = function(state)
+            safe(function() S.Aimbot_Enabled = state end)
         end
+    })
+
+    aim:Toggle({
+        Name = "Wall Check",
+        Default = S.Aimbot_WallCheck,
+        Pointer = "Aimbot_WallCheck",
+        Callback = function(state)
+            safe(function() S.Aimbot_WallCheck = state end)
+        end
+    })
+
+    aim:Toggle({
+        Name = "Toggle Mode",
+        Default = S.Aimbot_ToggleMode,
+        Pointer = "Aimbot_ToggleMode",
+        Callback = function(state)
+            safe(function() S.Aimbot_ToggleMode = state end)
+        end
+    })
+
+    aim:Toggle({
+        Name = "Team Check",
+        Default = S.TeamCheck,
+        Pointer = "TeamCheck",
+        Callback = function(state)
+            safe(function() S.TeamCheck = state end)
+        end
+    })
+
+    aim:Toggle({
+        Name = "Death Check",
+        Default = S.DeathCheck,
+        Pointer = "DeathCheck",
+        Callback = function(state)
+            safe(function() S.DeathCheck = state end)
+        end
+    })
+
+    aim:Toggle({
+        Name = "Show FOV",
+        Default = S.Show_FOV,
+        Pointer = "Show_FOV",
+        Callback = function(state)
+            safe(function() S.Show_FOV = state end)
+        end
+    })
+
+    safe(function()
+        aim:Dropdown({
+            Name = "Hitbox",
+            Options = { "Head", "Torso", "Random" },
+            Default = S.Hitbox,
+            Pointer = "Hitbox",
+            Callback = function(value)
+                safe(function() S.Hitbox = value end)
+            end
+        })
     end)
 
-    -- курсор: save/restore
-    pcall(function()
-        local uis = game:GetService("UserInputService")
-        local gui = library.gui
-        if not gui then return end
-        getgenv().PastaMouseBehavior = uis.MouseBehavior
-        local function apply()
-            pcall(function()
-                uis.MouseBehavior = gui.Enabled
-                    and Enum.MouseBehavior.Default
-                    or getgenv().PastaMouseBehavior
+    -- Right: Tuning
+    local tune = combatPage:Section({ Name = "Tuning", Side = "right" })
+
+    tune:Slider({
+        Name = "Smoothing",
+        Default = math.floor(S.Aim_Smoothing * 100 + 0.5),
+        Minimum = 0,
+        Maximum = 100,
+        Decimals = 1,
+        Measurement = "%",
+        Pointer = "Aim_Smoothing",
+        Callback = function(value)
+            safe(function() S.Aim_Smoothing = value / 100 end)
+        end
+    })
+
+    tune:Slider({
+        Name = "FOV",
+        Default = S.Aim_FOV_Hold,
+        Minimum = 10,
+        Maximum = 800,
+        Decimals = 0,
+        Measurement = "",
+        Pointer = "Aim_FOV",
+        Callback = function(value)
+            safe(function()
+                S.Aim_FOV_Hold = value
+                S.Aim_FOV_Toggle = value
             end)
         end
-        gui:GetPropertyChangedSignal("Enabled"):Connect(apply)
-        apply()
+    })
+
+    tune:Slider({
+        Name = "Max Distance",
+        Default = S.Aim_MaxDistance,
+        Minimum = 100,
+        Maximum = 5000,
+        Decimals = 0,
+        Measurement = "",
+        Pointer = "Aim_MaxDistance",
+        Callback = function(value)
+            safe(function() S.Aim_MaxDistance = value end)
+        end
+    })
+
+    tune:Colorpicker({
+        Name = "Lock Color",
+        Default = S.Aimbot_LockColor,
+        Pointer = "Aimbot_LockColor",
+        Callback = function(color, alpha)
+            safe(function() S.Aimbot_LockColor = color end)
+        end
+    })
+
+    -- Center: Triggerbot
+    local trig = combatPage:Section({ Name = "Triggerbot", Side = "left" })
+
+    trig:Toggle({
+        Name = "Enable Trigger",
+        Default = S.Trigger_Enabled,
+        Pointer = "Trigger_Enabled",
+        Callback = function(state)
+            safe(function() S.Trigger_Enabled = state end)
+        end
+    })
+
+    trig:Slider({
+        Name = "Delay",
+        Default = S.Trigger_Delay,
+        Minimum = 0,
+        Maximum = 500,
+        Decimals = 0,
+        Measurement = "ms",
+        Pointer = "Trigger_Delay",
+        Callback = function(value)
+            safe(function() S.Trigger_Delay = value end)
+        end
+    })
+
+    -- в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+    -- VISUALS TAB
+    -- в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+    local visPage = window:Page({ Name = "Visuals" })
+
+    local multiSections = visPage:MultiSection({
+        Sections = { "Enemies", "Teammates", "Self" },
+        Side = "left",
+        Size = 200
+    })
+
+    local enemy = multiSections[1]
+    local team = multiSections[2]
+    local self = multiSections[3]
+
+    -- в”Ђв”Ђ Enemies в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+    enemy:Toggle({
+        Name = "Enable ESP",
+        Default = S.ESP_Enabled,
+        Pointer = "ESP_Enabled",
+        Callback = function(state)
+            safe(function()
+                S.ESP_Enabled = state
+                F["Enabled"] = state
+                refresh()
+            end)
+        end
+    })
+
+    enemy:Slider({
+        Name = "Max Distance",
+        Default = S.ESP_MaxDistance,
+        Minimum = 100,
+        Maximum = 5000,
+        Decimals = 0,
+        Measurement = "",
+        Pointer = "ESP_MaxDistance",
+        Callback = function(value)
+            safe(function() S.ESP_MaxDistance = value end)
+        end
+    })
+
+    enemy:Toggle({
+        Name = "Names",
+        Default = F["Names"],
+        Pointer = "Names",
+        Callback = function(state)
+            safe(function()
+                F["Names"] = state
+                refresh()
+            end)
+        end
+    }):Colorpicker({
+        Name = "Name Color",
+        Default = F["Name_Color"].Color,
+        Pointer = "Name_Color",
+        Callback = function(color, alpha)
+            safe(function()
+                F["Name_Color"].Color = color
+                refresh()
+            end)
+        end
+    })
+
+    enemy:Toggle({
+        Name = "Boxes",
+        Default = F["Boxes"],
+        Pointer = "Boxes",
+        Callback = function(state)
+            safe(function()
+                F["Boxes"] = state
+                refresh()
+            end)
+        end
+    }):Colorpicker({
+        Name = "Box Color",
+        Default = F["Box_Color"].Color,
+        Pointer = "Box_Color",
+        Callback = function(color, alpha)
+            safe(function()
+                F["Box_Color"].Color = color
+                refresh()
+            end)
+        end
+    })
+
+    local hpToggle = enemy:Toggle({
+        Name = "Healthbar",
+        Default = F["Healthbar"],
+        Pointer = "Healthbar",
+        Callback = function(state)
+            safe(function()
+                F["Healthbar"] = state
+                refresh()
+            end)
+        end
+    })
+
+    hpToggle:Colorpicker({
+        Name = "High HP",
+        Default = F["Health_High"].Color,
+        Pointer = "Health_High",
+        Callback = function(color, alpha)
+            safe(function()
+                F["Health_High"].Color = color
+                refresh()
+            end)
+        end
+    })
+
+    hpToggle:Colorpicker({
+        Name = "Low HP",
+        Default = F["Health_Low"].Color,
+        Pointer = "Health_Low",
+        Callback = function(color, alpha)
+            safe(function()
+                F["Health_Low"].Color = color
+                refresh()
+            end)
+        end
+    })
+
+    enemy:Toggle({
+        Name = "Distance",
+        Default = F["Distance"],
+        Pointer = "Distance",
+        Callback = function(state)
+            safe(function()
+                F["Distance"] = state
+                refresh()
+            end)
+        end
+    }):Colorpicker({
+        Name = "Distance Color",
+        Default = F["Distance_Color"].Color,
+        Pointer = "Distance_Color",
+        Callback = function(color, alpha)
+            safe(function()
+                F["Distance_Color"].Color = color
+                refresh()
+            end)
+        end
+    })
+
+    enemy:Toggle({
+        Name = "Weapon",
+        Default = F["Weapon"],
+        Pointer = "Weapon",
+        Callback = function(state)
+            safe(function()
+                F["Weapon"] = state
+                refresh()
+            end)
+        end
+    }):Colorpicker({
+        Name = "Weapon Color",
+        Default = F["Weapon_Color"].Color,
+        Pointer = "Weapon_Color",
+        Callback = function(color, alpha)
+            safe(function()
+                F["Weapon_Color"].Color = color
+                refresh()
+            end)
+        end
+    })
+
+    safe(function()
+        enemy:Dropdown({
+            Name = "Box Type",
+            Options = { "Corner", "Full" },
+            Default = F["Box_Type"],
+            Pointer = "Box_Type",
+            Callback = function(value)
+                safe(function()
+                    F["Box_Type"] = value
+                    refresh()
+                end)
+            end
+        })
     end)
+
+    -- в”Ђв”Ђ Teammates в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+    team:Toggle({
+        Name = "Enable Teammates",
+        Default = S.Teammates_Enabled,
+        Pointer = "Teammates_Enabled",
+        Callback = function(state)
+            safe(function()
+                S.Teammates_Enabled = state
+                refresh()
+            end)
+        end
+    })
+
+    team:Colorpicker({
+        Name = "Box Color",
+        Default = S.Teammate_Box_Color,
+        Pointer = "Teammate_Box_Color",
+        Callback = function(color, alpha)
+            safe(function()
+                S.Teammate_Box_Color = color
+                refresh()
+            end)
+        end
+    })
+
+    team:Colorpicker({
+        Name = "Name Color",
+        Default = S.Teammate_Name_Color,
+        Pointer = "Teammate_Name_Color",
+        Callback = function(color, alpha)
+            safe(function()
+                S.Teammate_Name_Color = color
+                refresh()
+            end)
+        end
+    })
+
+    team:Colorpicker({
+        Name = "Weapon Color",
+        Default = S.Teammate_Weapon_Color,
+        Pointer = "Teammate_Weapon_Color",
+        Callback = function(color, alpha)
+            safe(function()
+                S.Teammate_Weapon_Color = color
+                refresh()
+            end)
+        end
+    })
+
+    team:Colorpicker({
+        Name = "HP High",
+        Default = S.Teammate_Health_High,
+        Pointer = "Teammate_Health_High",
+        Callback = function(color, alpha)
+            safe(function()
+                S.Teammate_Health_High = color
+                refresh()
+            end)
+        end
+    })
+
+    team:Colorpicker({
+        Name = "HP Low",
+        Default = S.Teammate_Health_Low,
+        Pointer = "Teammate_Health_Low",
+        Callback = function(color, alpha)
+            safe(function()
+                S.Teammate_Health_Low = color
+                refresh()
+            end)
+        end
+    })
+
+    team:Colorpicker({
+        Name = "Distance Color",
+        Default = S.Teammate_Distance_Color,
+        Pointer = "Teammate_Distance_Color",
+        Callback = function(color, alpha)
+            safe(function()
+                S.Teammate_Distance_Color = color
+                refresh()
+            end)
+        end
+    })
+
+    -- в”Ђв”Ђ Self в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+    self:Toggle({
+        Name = "Enable Self ESP",
+        Default = S.SelfESP_Enabled,
+        Pointer = "SelfESP_Enabled",
+        Callback = function(state)
+            safe(function()
+                S.SelfESP_Enabled = state
+                refresh()
+            end)
+        end
+    })
+
+    self:Colorpicker({
+        Name = "Box Color",
+        Default = S.Self_Box_Color,
+        Pointer = "Self_Box_Color",
+        Callback = function(color, alpha)
+            safe(function()
+                S.Self_Box_Color = color
+                refresh()
+            end)
+        end
+    })
+
+    self:Colorpicker({
+        Name = "Name Color",
+        Default = S.Self_Name_Color,
+        Pointer = "Self_Name_Color",
+        Callback = function(color, alpha)
+            safe(function()
+                S.Self_Name_Color = color
+                refresh()
+            end)
+        end
+    })
+
+    self:Colorpicker({
+        Name = "Weapon Color",
+        Default = S.Self_Weapon_Color,
+        Pointer = "Self_Weapon_Color",
+        Callback = function(color, alpha)
+            safe(function()
+                S.Self_Weapon_Color = color
+                refresh()
+            end)
+        end
+    })
+
+    -- Right side: Self Material
+    local mat = visPage:Section({ Name = "Self Material", Side = "right" })
+
+    mat:Toggle({
+        Name = "Enable Material",
+        Default = S.SelfChams_Enabled,
+        Pointer = "SelfChams_Enabled",
+        Callback = function(state)
+            safe(function()
+                S.SelfChams_Enabled = state
+                if not state and chams and chams.RestoreSelf then
+                    chams:RestoreSelf()
+                end
+            end)
+        end
+    })
+
+    safe(function()
+        mat:Dropdown({
+            Name = "Material",
+            Options = { "ForceField", "Neon", "SmoothPlastic", "Plastic", "Glass" },
+            Default = S.SelfChams_Material,
+            Pointer = "SelfChams_Material",
+            Callback = function(value)
+                safe(function() S.SelfChams_Material = value end)
+            end
+        })
+    end)
+
+    mat:Colorpicker({
+        Name = "Color",
+        Default = S.SelfChams_Color,
+        Pointer = "SelfChams_Color",
+        Callback = function(color, alpha)
+            safe(function() S.SelfChams_Color = color end)
+        end
+    })
+
+    -- Right side: Lighting
+    local light = visPage:Section({ Name = "Lighting", Side = "right" })
+
+    light:Toggle({
+        Name = "Fullbright",
+        Default = S.Fullbright_Enabled,
+        Pointer = "Fullbright_Enabled",
+        Callback = function(state)
+            safe(function() S.Fullbright_Enabled = state end)
+        end
+    })
+
+    light:Toggle({
+        Name = "Ambient",
+        Default = S.Ambient_Enabled,
+        Pointer = "Ambient_Enabled",
+        Callback = function(state)
+            safe(function() S.Ambient_Enabled = state end)
+        end
+    })
+
+    light:Colorpicker({
+        Name = "Ambient Color",
+        Default = S.Ambient_Color,
+        Pointer = "Ambient_Color",
+        Callback = function(color, alpha)
+            safe(function() S.Ambient_Color = color end)
+        end
+    })
+
+    -- Right side: Highlights
+    local hl = visPage:Section({ Name = "Highlights", Side = "right" })
+
+    hl:Toggle({
+        Name = "Enemy Highlights",
+        Default = S.Chams_Enabled,
+        Pointer = "Chams_Enabled",
+        Callback = function(state)
+            safe(function()
+                S.Chams_Enabled = state
+                if not state and chams and chams.RestoreHighlights then
+                    chams:RestoreHighlights()
+                end
+            end)
+        end
+    })
+
+    hl:Colorpicker({
+        Name = "Color",
+        Default = S.Chams_Color,
+        Pointer = "Chams_Color",
+        Callback = function(color, alpha)
+            safe(function() S.Chams_Color = color end)
+        end
+    })
+
+    -- Left: Misc
+    local misc = visPage:Section({ Name = "Misc", Side = "left" })
+
+    misc:Toggle({
+        Name = "Watermark",
+        Default = S.Watermark_Enabled,
+        Pointer = "Watermark_Enabled",
+        Callback = function(state)
+            safe(function() S.Watermark_Enabled = state end)
+        end
+    })
+
+    misc:Toggle({
+        Name = "Tracers",
+        Default = S.Tracers_Enabled,
+        Pointer = "Tracers_Enabled",
+        Callback = function(state)
+            safe(function() S.Tracers_Enabled = state end)
+        end
+    })
+
+    -- в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+    -- SETTINGS TAB
+    -- в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+    local setPage = window:Page({ Name = "Settings" })
+
+    local menu = setPage:Section({ Name = "Menu", Side = "left" })
+
+    menu:Keybind({
+        Name = "Menu Bind",
+        Default = Enum.KeyCode.RightShift,
+        Mode = "Toggle",
+        KeybindName = "MenuBind",
+        Pointer = "MenuBind",
+        Callback = function() end
+    })
+
+    menu:Colorpicker({
+        Name = "Accent",
+        Default = Color3.fromRGB(155, 150, 219),
+        Pointer = "MenuAccent",
+        Callback = function(color, alpha)
+            safe(function()
+                local oldAccent = Color3.fromRGB(155, 150, 219)
+                for _, v in pairs(library.drawings) do
+                    local obj = v[1]
+                    if obj and obj.__OBJECT_EXISTS then
+                        if obj.Color == oldAccent then obj.Color = color end
+                    end
+                end
+            end)
+        end
+    })
+
+    menu:Button({
+        Name = "Unload",
+        Callback = function()
+            safe(function() window:Unload() end)
+            safe(function()
+                if deps.Main and deps.Main.Unload then
+                    deps.Main.Unload()
+                elseif getgenv().PastaUnload then
+                    getgenv().PastaUnload()
+                end
+            end)
+        end
+    })
+
+    local info = setPage:Section({ Name = "Info", Side = "left" })
+
+    info:Label({
+        Name = "PastaSense v1.0",
+        Middle = true
+    })
+
+    window:Initialize()
 
     return library
 end
