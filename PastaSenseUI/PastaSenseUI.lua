@@ -5,7 +5,7 @@
 		local Lib = loadstring(game:HttpGet("YOUR_RAW_URL/PastaSenseUI.lua"))()
 		local Win = Lib:CreateWindow({ Name = "pastasense", User = "mamasha", ToggleKey = Enum.KeyCode.Insert })
 		local Rage = Win:AddTab({ Name = "rage", Icon = "+" })
-		... see test.lua
+		... see example.lua
 	Executor friendly: gethui / protect_gui / writefile guarded with pcall.
 ]]
 
@@ -417,7 +417,7 @@ function PastaSenseUI:CreateWindow(opts)
 			Col._tab = Tab
 
 			function Col:Section(title)
-				self._order += 1
+				self._order = self._order + 1
 				local T = Label(Scroll, string.upper(title or "SECTION"), 11, Theme.Section, Enum.Font.GothamBold)
 				T.Size = UDim2.new(1, 0, 0, 18)
 				T.LayoutOrder = self._order
@@ -426,7 +426,7 @@ function PastaSenseUI:CreateWindow(opts)
 			end
 
 			local function trackCard(name, frame)
-				self._order += 1
+				self._order = self._order + 1
 				frame.LayoutOrder = self._order
 				table.insert(self._tab._elements, { Name = name, Frame = frame })
 			end

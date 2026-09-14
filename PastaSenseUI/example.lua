@@ -1,7 +1,7 @@
--- test.lua — демо PastaSenseUI 1в1 как на скриншоте
+-- example.lua — демо PastaSenseUI 1в1 как на скриншоте
 -- Запуск в executor:
 --   local Lib = loadstring(game:HttpGet("RAW_URL_СЮДА/PastaSenseUI.lua"))()
---   loadstring(game:HttpGet("RAW_URL_СЮДА/test.lua"))()
+--   loadstring(game:HttpGet("RAW_URL_СЮДА/example.lua"))()
 -- Локальный тест (оба файла рядом):
 --   local Lib = loadstring(readfile("PastaSenseUI.lua"))()
 
@@ -10,46 +10,58 @@ local LibUrls = {
 }
 
 -- качаем любым доступным способом: executor game:HttpGet,
--- HttpGetAsync (Studio с включённым HTTP), request-style API
+-- HttpGetAsync (Studio с включённым HTTP), request-style API.
+-- Доступ к globals через rawget(_G,...), чтобы не триггерить Script Analysis.
+local G = (type(rawget(_G, "getgenv")) == "function" and rawget(_G, "getgenv")()) or _G
+local synT = rawget(G, "syn")
+local httpT = rawget(G, "http")
+
 local function httpGet(url)
 	if typeof(game.HttpGet) == "function" then
 		local ok, res = pcall(function() return game:HttpGet(url) end)
-		if ok and type(res) == "string" and #res > 0 then return res end
+		if ok and type(res) == "string" and #res > 0 then return res, "game:HttpGet" end
 	end
 	do
 		local ok, res = pcall(function() return game:HttpGetAsync(url) end)
-		if ok and type(res) == "string" and #res > 0 then return res end
+		if ok and type(res) == "string" and #res > 0 then return res, "game:HttpGetAsync" end
 	end
-	local req = (syn and syn.request) or (http and http.request) or (getgenv and getgenv().request) or _G.request
+	local req = (synT and synT.request) or (httpT and httpT.request) or rawget(G, "request")
 	if typeof(req) == "function" then
 		local ok, res = pcall(req, { Url = url, Method = "GET" })
 		if ok and res then
 			local body = (type(res) == "table" and res.Body) or res
-			if type(body) == "string" and #body > 0 then return body end
+			if type(body) == "string" and #body > 0 then return body, "request" end
 		end
 	end
-	return nil
+	return nil, nil
 end
 
-local compile = loadstring or load
-if not compile then
-	error("[pastasense] в этом окружении нет loadstring/load — нужен executor (Wave/Solara/Synapse) или Studio")
+local compileFn = rawget(G, "loadstring")
+if type(compileFn) ~= "function" then
+	error("[pastasense] нет loadstring — нужен executor (Wave/Solara/Delta) или Studio")
 end
 
 local Lib
 do
 	local lastErr = "no urls tried"
 	for _, url in ipairs(LibUrls) do
-		local src = httpGet(url)
+		local src, used = httpGet(url)
 		if not src then
-			lastErr = "скачивание не удалось (нет game:HttpGet / HttpGetAsync / request). Если это Studio — включи Game Settings -> Security -> Enable Studio Access to API Services и HTTP Requests"
+			lastErr = "скачивание не удалось (game:HttpGet/HttpGetAsync/request недоступны). Studio: Game Settings -> Security -> включить HTTP Requests, запускать через Play"
 		else
-			local ok, res = pcall(function() return compile(src)() end)
-			if ok and res then
-				Lib = res
-				break
+			print(("[pastasense] скачано через %s, байт: %d, начало: %s"):format(
+				tostring(used), #src, string.sub(string.gsub(src, "%c", "?"), 1, 80)))
+			local fn, cerr = compileFn(src)
+			if not fn then
+				lastErr = "loadstring отказался компилировать (" .. tostring(used) .. "): " .. tostring(cerr)
 			else
-				lastErr = tostring(res)
+				local ok, res = pcall(fn)
+				if ok and res then
+					Lib = res
+					break
+				else
+					lastErr = "ошибка запуска библиотеки: " .. tostring(res)
+				end
 			end
 		end
 	end
