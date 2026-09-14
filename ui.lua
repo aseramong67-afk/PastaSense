@@ -202,6 +202,26 @@ function UI.Build(deps, library)
         end
     end)
 
+    -- курсор: пока меню открыто — свободный (Default), закрыли — вернуть захват (LockCenter),
+    -- иначе камера после закрытия вертится только с зажатой ПКМ
+    pcall(function()
+        local uis = game:GetService("UserInputService")
+        local gui = library.gui
+        if gui then
+            local function apply()
+                pcall(function()
+                    if gui.Enabled then
+                        uis.MouseBehavior = Enum.MouseBehavior.Default
+                    else
+                        uis.MouseBehavior = Enum.MouseBehavior.LockCenter
+                    end
+                end)
+            end
+            gui:GetPropertyChangedSignal("Enabled"):Connect(apply)
+            apply()
+        end
+    end)
+
     return library
 end
 
