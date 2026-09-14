@@ -4,7 +4,7 @@
 
 local BASE = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/modules/"
 local UI_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/ui.lua"
-local LIB_URL = "https://raw.githubusercontent.com/i77lhm/Libraries/refs/heads/main/Millenium/Library.lua"
+local LIB_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/library.lua"
 
 -- выгрузка прошлой копии
 pcall(function()
