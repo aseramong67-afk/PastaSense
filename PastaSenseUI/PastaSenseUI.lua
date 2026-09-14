@@ -426,9 +426,9 @@ function PastaSenseUI:CreateWindow(opts)
 			end
 
 			local function trackCard(name, frame)
-				self._order = self._order + 1
-				frame.LayoutOrder = self._order
-				table.insert(self._tab._elements, { Name = name, Frame = frame })
+				Col._order = Col._order + 1
+				frame.LayoutOrder = Col._order
+				table.insert(Col._tab._elements, { Name = name, Frame = frame })
 			end
 
 			function Col:Toggle(o)
@@ -719,13 +719,13 @@ function PastaSenseUI:CreateWindow(opts)
 						listening = false
 						current = input.KeyCode
 						KeyBtn.Text = current.Name
-						PastaSenseUI.Flags[flag] = { Value = current, Set = function(v) current = v KeyBtn.Text = v.Name end }
+						PastaSenseUI.Flags[flag] = { Value = current, Set = function(v) current = v; KeyBtn.Text = v.Name end }
 						pcall(cb, current)
 					elseif not listening and not gpe and input.KeyCode == current then
 						pcall(cb, current)
 					end
 				end)
-				registerFlag(flag, current, function(v) current = v KeyBtn.Text = v.Name end)
+				registerFlag(flag, current, function(v) current = v; KeyBtn.Text = v.Name end)
 				return { Get = function() return current end }
 			end
 
