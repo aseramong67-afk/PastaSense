@@ -11,7 +11,7 @@
 
 local PastaSenseUI = {}
 PastaSenseUI.__index = PastaSenseUI
-PastaSenseUI.Version = "1.5.2"
+PastaSenseUI.Version = "1.6.0"
 PastaSenseUI.Flags = {} -- flag -> { Value = any, Set = fn }
 
 -- // Services
@@ -366,6 +366,22 @@ function PastaSenseUI:CreateWindow(opts)
 	Shadow.Parent = Main
 	Corner(Shadow, 15)
 
+	-- Глубина фона + разделитель сайдбара
+	local MainGrad = Instance.new("UIGradient")
+	MainGrad.Rotation = 90
+	MainGrad.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(212, 212, 212)),
+	})
+	MainGrad.Parent = Main
+	local SideDiv = Instance.new("Frame")
+	SideDiv.Size = UDim2.new(0, 1, 1, -16)
+	SideDiv.Position = UDim2.new(0, 185, 0, 8)
+	SideDiv.BackgroundColor3 = Theme.Stroke
+	SideDiv.BackgroundTransparency = 0.3
+	SideDiv.BorderSizePixel = 0
+	SideDiv.Parent = Main
+
 	-- Снежинки на фоне (поверх блюра, под меню; мелкие белые точки, не кликабельны)
 	local Snow = Instance.new("Frame")
 	Snow.Name = "Snow"
@@ -576,6 +592,7 @@ function PastaSenseUI:CreateWindow(opts)
 		sidebarOpen = not sidebarOpen
 		if sidebarOpen then
 			Sidebar.Visible = true
+			SideDiv.Visible = true
 			tween(Sidebar, { Size = UDim2.new(0, 185, 1, 0) }, 0.2)
 			tween(PanelBtn, { Position = UDim2.new(0, 198, 0, 12) }, 0.2)
 			tween(Topbar, { Size = UDim2.new(1, -199, 0, 50), Position = UDim2.new(0, 185, 0, 0) }, 0.2)
@@ -586,7 +603,7 @@ function PastaSenseUI:CreateWindow(opts)
 			tween(Topbar, { Size = UDim2.new(1, -56, 0, 50), Position = UDim2.new(0, 46, 0, 0) }, 0.2)
 			tween(Content, { Size = UDim2.new(1, -20, 1, -60), Position = UDim2.new(0, 10, 0, 50) }, 0.2)
 			task.delay(0.2, function()
-				if not sidebarOpen then Sidebar.Visible = false end
+				if not sidebarOpen then Sidebar.Visible = false SideDiv.Visible = false end
 			end)
 		end
 	end)
@@ -639,6 +656,15 @@ function PastaSenseUI:CreateWindow(opts)
 		BtnStroke.Transparency = 1
 		BtnStroke.Thickness = 1
 		BtnStroke.Parent = Btn
+		local ActiveBar = Instance.new("Frame")
+		ActiveBar.Size = UDim2.new(0, 3, 0, 20)
+		ActiveBar.AnchorPoint = Vector2.new(0, 0.5)
+		ActiveBar.Position = UDim2.new(0, 0, 0.5, 0)
+		ActiveBar.BackgroundColor3 = Theme.Accent
+		ActiveBar.BorderSizePixel = 0
+		ActiveBar.Visible = false
+		ActiveBar.Parent = Btn
+		Corner(ActiveBar, 1)
 
 		local IconL = TabIcon(Btn, tabIcon, Theme.Hint, tabName)
 
@@ -692,6 +718,7 @@ function PastaSenseUI:CreateWindow(opts)
 		Tab._icon = IconL
 		Tab._name = NameL
 		Tab._stroke = BtnStroke
+		Tab._bar = ActiveBar
 		Tab._elements = {}
 		Tab._weaponButtons = {}
 		Tab._weaponCallback = nil
@@ -720,10 +747,22 @@ function PastaSenseUI:CreateWindow(opts)
 
 			function Col:Section(title)
 				self._order = self._order + 1
-				local T = Label(Scroll, string.upper(title or "SECTION"), 11, Theme.Section, Theme.FontBold)
-				T.Size = UDim2.new(1, 0, 0, 18)
-				T.LayoutOrder = self._order
-				table.insert(self._tab._elements, { Name = title, Frame = T, SectionTitle = T })
+				local Wrap = Instance.new("Frame")
+				Wrap.Size = UDim2.new(1, 0, 0, 26)
+				Wrap.BackgroundTransparency = 1
+				Wrap.LayoutOrder = self._order
+				Wrap.Parent = Scroll
+				local T = Label(Wrap, string.upper(title or "SECTION"), 11, Theme.Section, Theme.FontBold)
+				T.Size = UDim2.new(1, 0, 0, 16)
+				local Line = Instance.new("Frame")
+				Line.Size = UDim2.new(0, 26, 0, 2)
+				Line.Position = UDim2.new(0, 1, 0, 19)
+				Line.BackgroundColor3 = Theme.Accent
+				Line.BackgroundTransparency = 0.25
+				Line.BorderSizePixel = 0
+				Line.Parent = Wrap
+				Corner(Line, 1)
+				table.insert(self._tab._elements, { Name = title, Frame = Wrap, SectionTitle = Wrap })
 				return self
 			end
 
@@ -731,6 +770,17 @@ function PastaSenseUI:CreateWindow(opts)
 				Col._order = Col._order + 1
 				frame.LayoutOrder = Col._order
 				table.insert(Col._tab._elements, { Name = name, Frame = frame })
+			end
+
+			-- Обводка + hover-подсветка карточек (убирает "сырость")
+			local function styleCard(card)
+				Stroke(card, Theme.Stroke, 1)
+				card.MouseEnter:Connect(function()
+					tween(card, { BackgroundColor3 = Theme.CardHover }, 0.12)
+				end)
+				card.MouseLeave:Connect(function()
+					tween(card, { BackgroundColor3 = Theme.Card }, 0.12)
+				end)
 			end
 
 			function Col:Toggle(o)
@@ -748,6 +798,7 @@ function PastaSenseUI:CreateWindow(opts)
 				Corner(Card, 10)
 				Padding(Card, 14, 14, 0, 0)
 				trackCard(name, Card)
+				styleCard(Card)
 
 				Label(Card, name, 13, Theme.Text, Theme.FontMedium).Size = UDim2.new(1, -70, 1, 0)
 
@@ -805,6 +856,7 @@ function PastaSenseUI:CreateWindow(opts)
 				Corner(Card, 10)
 				Padding(Card, 14, 14, 8, 10)
 				trackCard(name, Card)
+				styleCard(Card)
 
 				local Top = Instance.new("Frame")
 				Top.Size = UDim2.new(1, 0, 0, 20)
@@ -924,6 +976,7 @@ function PastaSenseUI:CreateWindow(opts)
 				Corner(Card, 10)
 				Padding(Card, 14, 10, 0, 0)
 				trackCard(name, Card)
+				styleCard(Card)
 				Card.ClipsDescendants = false
 
 				Label(Card, name, 13, Theme.Text, Theme.FontMedium).Size = UDim2.new(0.45, 0, 1, 0)
@@ -1005,6 +1058,7 @@ function PastaSenseUI:CreateWindow(opts)
 				Card.Parent = Scroll
 				Corner(Card, 10)
 				trackCard(name, Card)
+				styleCard(Card)
 				Card.MouseButton1Click:Connect(function() pcall(cb) end)
 				return Card
 			end
@@ -1024,6 +1078,7 @@ function PastaSenseUI:CreateWindow(opts)
 				Corner(Card, 10)
 				Padding(Card, 14, 10, 0, 0)
 				trackCard(name, Card)
+				styleCard(Card)
 
 				Label(Card, name, 13, Theme.Text, Theme.FontMedium).Size = UDim2.new(0.55, 0, 1, 0)
 				local KeyBtn = Instance.new("TextButton")
@@ -1075,6 +1130,7 @@ function PastaSenseUI:CreateWindow(opts)
 				Corner(Card, 10)
 				Padding(Card, 14, 10, 0, 0)
 				trackCard(name, Card)
+				styleCard(Card)
 
 				Label(Card, name, 13, Theme.Text, Theme.FontMedium).Size = UDim2.new(1, -50, 1, 0)
 				local Prev = Instance.new("TextButton")
@@ -1301,6 +1357,7 @@ function PastaSenseUI:CreateWindow(opts)
 				Corner(Card, 10)
 				Padding(Card, 14, 10, 8, 8)
 				trackCard(name, Card)
+				styleCard(Card)
 
 				local Box = Instance.new("TextBox")
 				Box.Size = UDim2.new(1, 0, 1, 0)
@@ -1409,12 +1466,14 @@ function PastaSenseUI:CreateWindow(opts)
 				paintTabIcon(t._icon, Theme.Hint)
 				if t._name then t._name.TextColor3 = Theme.Hint end
 				if t._stroke then t._stroke.Transparency = 1 end
+				if t._bar then t._bar.Visible = false end
 			end
 			Page.Visible = true
 			Btn.BackgroundColor3 = Theme.Card
 			paintTabIcon(IconL, Theme.Text)
 			NameL.TextColor3 = Theme.Text
 			BtnStroke.Transparency = 0.6
+			ActiveBar.Visible = true
 			Window._activeTab = Tab
 			CurrentTabLabel.Text = tabName
 			SearchBox.Text = ""
@@ -1537,6 +1596,42 @@ function PastaSenseUI:CreateWindow(opts)
 	function Window:Destroy()
 		pcall(function() if Blur then Blur:Destroy() end end)
 		pcall(function() ScreenGui:Destroy() end)
+	end
+
+	-- Тост-уведомление справа снизу. Win:Notify("saved", 2500)
+	function Window:Notify(text, ms)
+		ms = ms or 2500
+		local Toast = Instance.new("Frame")
+		Toast.Size = UDim2.new(0, 260, 0, 46)
+		Toast.AnchorPoint = Vector2.new(1, 1)
+		Toast.Position = UDim2.new(1, -16, 1, 60)
+		Toast.BackgroundColor3 = Theme.Card
+		Toast.BorderSizePixel = 0
+		Toast.Parent = ScreenGui
+		Corner(Toast, 10)
+		Stroke(Toast, Theme.Stroke, 1)
+		Padding(Toast, 12, 12, 0, 0)
+		local Bar = Instance.new("Frame")
+		Bar.Size = UDim2.new(0, 3, 0, 22)
+		Bar.AnchorPoint = Vector2.new(0, 0.5)
+		Bar.Position = UDim2.new(0, 12, 0.5, 0)
+		Bar.BackgroundColor3 = Theme.Accent
+		Bar.BorderSizePixel = 0
+		Bar.Parent = Toast
+		Corner(Bar, 1)
+		local TL = Label(Toast, tostring(text), 12, Theme.Text, Theme.FontMedium)
+		TL.Size = UDim2.new(1, -26, 1, 0)
+		TL.Position = UDim2.new(0, 22, 0, 0)
+		TL.TextYAlignment = Enum.TextYAlignment.Center
+		tween(Toast, { Position = UDim2.new(1, -16, 1, -16) }, 0.25)
+		task.delay(ms / 1000, function()
+			if not Toast.Parent then return end
+			tween(Toast, { Position = UDim2.new(1, -16, 1, 60) }, 0.25)
+			task.delay(0.25, function()
+				pcall(function() Toast:Destroy() end)
+			end)
+		end)
+		return Toast
 	end
 
 	getgenv = getgenv or (function() return _G end)

@@ -2,7 +2,7 @@
 -- Запуск в инжекторе одной строкой:
 --   loadstring(game:HttpGet("https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/demo.lua"))()
 
-local LIB_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/PastaSenseUI.lua?v=1.5.2"
+local LIB_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/PastaSenseUI.lua?v=1.6.0"
 
 local function fetch(url)
 	local ok, res = pcall(function() return game:HttpGet(url) end)
@@ -146,3 +146,4 @@ Win:AddTab({ Name = "scripts" })
 -- Lib:SetTheme({ Accent = Color3.fromRGB(180, 255, 120) })
 
 print("[pastasense] UI loaded. Toggle = Insert")
+Win:Notify("pastasense loaded")
