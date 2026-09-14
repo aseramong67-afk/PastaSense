@@ -1,10 +1,10 @@
--- loader.lua — полный запуск PastaSense + Seere UI
+-- loader.lua вЂ” РїРѕР»РЅС‹Р№ Р·Р°РїСѓСЃРє PastaSense + Splix UI
 
 local BASE = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/modules/"
 local UI_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/ui.lua"
-local LIB_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/seere.lua"
+local LIB_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/splix.lua"
 
--- выгрузка прошлой копии
+-- РІС‹РіСЂСѓР·РєР° РїСЂРѕС€Р»РѕР№ РєРѕРїРёРё
 pcall(function()
     if getgenv().PastaUnload then getgenv().PastaUnload() end
 end)
