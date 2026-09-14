@@ -2,7 +2,7 @@
 -- Запуск в инжекторе одной строкой:
 --   loadstring(game:HttpGet("https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/demo.lua"))()
 
-local LIB_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/PastaSenseUI.lua?v=1.4.0"
+local LIB_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/PastaSenseUI.lua?v=1.4.1"
 
 local function fetch(url)
 	local ok, res = pcall(function() return game:HttpGet(url) end)

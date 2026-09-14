@@ -11,7 +11,7 @@
 
 local PastaSenseUI = {}
 PastaSenseUI.__index = PastaSenseUI
-PastaSenseUI.Version = "1.4.0"
+PastaSenseUI.Version = "1.4.1"
 PastaSenseUI.Flags = {} -- flag -> { Value = any, Set = fn }
 
 -- // Services
@@ -344,6 +344,7 @@ function PastaSenseUI:CreateWindow(opts)
 	Sidebar.Size = UDim2.new(0, 185, 1, 0)
 	Sidebar.BackgroundColor3 = Theme.Sidebar
 	Sidebar.BorderSizePixel = 0
+	Sidebar.ClipsDescendants = true
 	Sidebar.Parent = Main
 	Corner(Sidebar, 12)
 	-- fix right corners of sidebar (cover with small frame)
@@ -473,12 +474,24 @@ function PastaSenseUI:CreateWindow(opts)
 			Main.Visible = not Main.Visible
 		end
 	end)
+	-- Кнопка [] сворачивает/разворачивает сайдбар, контент расширяется
+	local sidebarOpen = true
 	PanelBtn.MouseButton1Click:Connect(function()
-		Main.Visible = not Main.Visible
-		-- panel button stays visible? keep main toggle simple:
-		if not Main.Visible then
-			-- show a tiny floating reopen via same key; keep button inside main so nothing to do
-			Main.Visible = true
+		sidebarOpen = not sidebarOpen
+		if sidebarOpen then
+			Sidebar.Visible = true
+			tween(Sidebar, { Size = UDim2.new(0, 185, 1, 0) }, 0.2)
+			tween(PanelBtn, { Position = UDim2.new(0, 198, 0, 12) }, 0.2)
+			tween(Topbar, { Size = UDim2.new(1, -199, 0, 50), Position = UDim2.new(0, 185, 0, 0) }, 0.2)
+			tween(Content, { Size = UDim2.new(1, -205, 1, -60), Position = UDim2.new(0, 195, 0, 50) }, 0.2)
+		else
+			tween(Sidebar, { Size = UDim2.new(0, 0, 1, 0) }, 0.2)
+			tween(PanelBtn, { Position = UDim2.new(0, 13, 0, 12) }, 0.2)
+			tween(Topbar, { Size = UDim2.new(1, -56, 0, 50), Position = UDim2.new(0, 46, 0, 0) }, 0.2)
+			tween(Content, { Size = UDim2.new(1, -20, 1, -60), Position = UDim2.new(0, 10, 0, 50) }, 0.2)
+			task.delay(0.2, function()
+				if not sidebarOpen then Sidebar.Visible = false end
+			end)
 		end
 	end)
 
