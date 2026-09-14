@@ -1,17 +1,14 @@
--- loader.lua — полный запуск PastaSense + Millenium UI
--- Закинь все файлы на GitHub (или оставь локально) и поправь BASE под себя.
--- Локальный вариант (executor с readfile): замени HttpGet на readfile("PastaSense/modules/...")
+-- loader.lua — полный запуск PastaSense + Atlanta UI
 
 local BASE = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/modules/"
 local UI_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/ui.lua"
-local LIB_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/library.lua"
 
 -- выгрузка прошлой копии
 pcall(function()
     if getgenv().PastaUnload then getgenv().PastaUnload() end
 end)
 
-local library = loadstring(game:HttpGet(LIB_URL))()
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/i77lhm/Libraries/refs/heads/main/Atlanta/Library.lua"))()
 local Config = loadstring(game:HttpGet(BASE .. "config.lua"))()
 local Services = loadstring(game:HttpGet(BASE .. "services.lua"))()
 local AimbotMod = loadstring(game:HttpGet(BASE .. "aimbot.lua"))()
@@ -38,7 +35,6 @@ local main = MainMod.New({
     Connections = connections,
 })
 
--- UI привязан ко всем модулям: каждый toggle/slider/dropdown/colorpicker пишет в S / ESPFlags + refresh
 local window = UIMod.Build({
     Config = Config,
     Services = Services,
