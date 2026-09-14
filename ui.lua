@@ -176,15 +176,9 @@ function UI.Build(deps, library)
     -- в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
     local visPage = window:Page({ Name = "Visuals" })
 
-    local multiSections = visPage:MultiSection({
-        Sections = { "Enemies", "Teammates", "Self" },
-        Side = "left",
-        Size = 200
-    })
-
-    local enemy = multiSections[1]
-    local team = multiSections[2]
-    local self = multiSections[3]
+    local enemy = visPage:Section({ Name = "Enemies", Side = "left" })
+    local team = visPage:Section({ Name = "Teammates", Side = "left" })
+    local self = visPage:Section({ Name = "Self", Side = "left" })
 
     -- в”Ђв”Ђ Enemies в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
     enemy:Toggle({
