@@ -5,18 +5,28 @@
 -- Локальный тест (оба файла рядом):
 --   local Lib = loadstring(readfile("PastaSenseUI.lua"))()
 
-local LibUrl = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/UI%20PastaSense/PastaSenseUI.lua"
+local LibUrls = {
+	"https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/PastaSenseUI.lua",
+}
 
 local Lib
 do
-	local ok, res = pcall(function()
-		return loadstring(game:HttpGet(LibUrl))()
-	end)
-	if ok and res then
-		Lib = res
-	else
-		-- fallback: локальный файл рядом с test.lua
-		Lib = loadstring(readfile("PastaSenseUI.lua"))()
+	local lastErr
+	for _, url in ipairs(LibUrls) do
+		local ok, res = pcall(function()
+			return loadstring(game:HttpGet(url))()
+		end)
+		if ok and res then
+			Lib = res
+			break
+		else
+			lastErr = res
+		end
+	end
+	if not Lib then
+		error("[pastasense] не смог загрузить библиотеку. Проверь URL: "
+			.. table.concat(LibUrls, ", ")
+			.. " | ошибка: " .. tostring(lastErr))
 	end
 end
 
