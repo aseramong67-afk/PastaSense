@@ -11,7 +11,7 @@
 
 local PastaSenseUI = {}
 PastaSenseUI.__index = PastaSenseUI
-PastaSenseUI.Version = "1.6.0"
+PastaSenseUI.Version = "1.6.1"
 PastaSenseUI.Flags = {} -- flag -> { Value = any, Set = fn }
 
 -- // Services
@@ -1011,6 +1011,7 @@ function PastaSenseUI:CreateWindow(opts)
 				local current = def
 				local function close()
 					List.Visible = false
+					Card.ZIndex = 1
 					tween(List, { Size = UDim2.new(0, 160, 0, 0) }, 0.12)
 				end
 				local function apply(v, silent)
@@ -1035,7 +1036,11 @@ function PastaSenseUI:CreateWindow(opts)
 				Box.MouseButton1Click:Connect(function()
 					List.Visible = not List.Visible
 					if List.Visible then
+						-- Поднять карточку над нижними, иначе список окажется под ними
+						Card.ZIndex = 20
 						tween(List, { Size = UDim2.new(0, 160, 0, #items * 28 + 8) }, 0.15)
+					else
+						Card.ZIndex = 1
 					end
 				end)
 				registerFlag(flag, current, apply)
