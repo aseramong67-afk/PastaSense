@@ -28,9 +28,10 @@ function UI.Build(deps, library)
         togglesToSync[#togglesToSync + 1] = { flag, get }
     end
 
-    -- ============ AIMBOT ============
-    local aimTab = library:addTab("Aimbot")
-    local gAim = aimTab:createGroup("left", "Aimbot")
+    -- ============ COMBAT ============
+    local combatTab = library:addTab("Combat")
+
+    local gAim = combatTab:createGroup("left", "Aimbot")
     tg(gAim, "Enable Aimbot", "Aimbot_Enabled", function() return S.Aimbot_Enabled end, function(b) S.Aimbot_Enabled = b end)
     tg(gAim, "Wall Check", "Aimbot_WallCheck", function() return S.Aimbot_WallCheck end, function(b) S.Aimbot_WallCheck = b end)
     tg(gAim, "Toggle Mode", "Aimbot_ToggleMode", function() return S.Aimbot_ToggleMode end, function(b) S.Aimbot_ToggleMode = b end)
@@ -43,7 +44,14 @@ function UI.Build(deps, library)
         callback = function(v) S.Hitbox = v end,
     })
 
-    local gTune = aimTab:createGroup("right", "Tuning")
+    local gTrig = combatTab:createGroup("center", "Triggerbot")
+    tg(gTrig, "Enable Trigger", "Trigger_Enabled", function() return S.Trigger_Enabled end, function(b) S.Trigger_Enabled = b end)
+    gTrig:addSlider({
+        text = "Delay", flag = "Trigger_Delay", min = 0, max = 500, value = S.Trigger_Delay,
+        callback = function(v) S.Trigger_Delay = v end,
+    }, "ms")
+
+    local gTune = combatTab:createGroup("right", "Tuning")
     gTune:addSlider({
         text = "Smoothing", flag = "Aim_Smoothing", min = 0, max = 100,
         value = math.floor(S.Aim_Smoothing * 100 + 0.5),
@@ -62,25 +70,18 @@ function UI.Build(deps, library)
         callback = function(c) S.Aimbot_LockColor = c end,
     })
 
-    -- ============ TRIGGER ============
-    local trigTab = library:addTab("Trigger")
-    local gTrig = trigTab:createGroup("left", "Triggerbot")
-    tg(gTrig, "Enable Trigger", "Trigger_Enabled", function() return S.Trigger_Enabled end, function(b) S.Trigger_Enabled = b end)
-    gTrig:addSlider({
-        text = "Delay", flag = "Trigger_Delay", min = 0, max = 500, value = S.Trigger_Delay,
-        callback = function(v) S.Trigger_Delay = v end,
-    }, "ms")
+    -- ============ VISUALS ============
+    local visTab = library:addTab("Visuals")
 
-    -- ============ ENEMIES ============
-    local espTab = library:addTab("Enemies")
-    local gGen = espTab:createGroup("left", "General")
+    -- левая колонка: Enemies
+    local gGen = visTab:createGroup("left", "General")
     tg(gGen, "Enable ESP", "ESP_Enabled", function() return S.ESP_Enabled end, function(b) S.ESP_Enabled = b; ESPFlags["Enabled"] = b; refresh() end)
     gGen:addSlider({
         text = "Max Distance", flag = "ESP_MaxDist", min = 100, max = 5000, value = S.ESP_MaxDistance,
         callback = function(v) S.ESP_MaxDistance = v end,
     }, "")
 
-    local gEl = espTab:createGroup("left", "Elements")
+    local gEl = visTab:createGroup("left", "Elements")
     local tNames = gEl:addToggle({ text = "Names", flag = "ESP_Names", callback = function(b) ESPFlags["Names"] = b; refresh() end })
     togglesToSync[#togglesToSync + 1] = { "ESP_Names", function() return ESPFlags["Names"] end }
     tNames:addColorpicker({ flag = "ESP_Name_Color", color = ESPFlags["Name_Color"].Color,
@@ -108,19 +109,18 @@ function UI.Build(deps, library)
     tWpn:addColorpicker({ flag = "ESP_Weapon_Color", color = ESPFlags["Weapon_Color"].Color,
         callback = function(c) ESPFlags["Weapon_Color"].Color = c; refresh() end })
 
-    local gStyle = espTab:createGroup("right", "Style")
+    -- центр: Style + Teammates + Misc
+    local gStyle = visTab:createGroup("center", "Style")
     gStyle:addList({
         text = "Box Type", flag = "ESP_Box_Type",
         values = { "Corner", "Full" }, value = ESPFlags["Box_Type"],
         callback = function(v) ESPFlags["Box_Type"] = v; refresh() end,
     })
 
-    -- ============ TEAMMATES ============
-    local tmTab = library:addTab("Teammates")
-    local gTm = tmTab:createGroup("left", "Teammates")
+    local gTm = visTab:createGroup("center", "Teammates")
     tg(gTm, "Enable Teammates ESP", "Teammates_Enabled", function() return S.Teammates_Enabled end, function(b) S.Teammates_Enabled = b; refresh() end)
 
-    local gTmC = tmTab:createGroup("right", "Colors")
+    local gTmC = visTab:createGroup("center", "Teammate Colors")
     gTmC:addColorpicker({ text = "Box Color", flag = "Tm_Box", color = S.Teammate_Box_Color,
         callback = function(c) S.Teammate_Box_Color = c; refresh() end })
     gTmC:addColorpicker({ text = "Name Color", flag = "Tm_Name", color = S.Teammate_Name_Color,
@@ -134,9 +134,12 @@ function UI.Build(deps, library)
     gTmC:addColorpicker({ text = "Distance Color", flag = "Tm_Dist", color = S.Teammate_Distance_Color,
         callback = function(c) S.Teammate_Distance_Color = c; refresh() end })
 
-    -- ============ SELF ============
-    local selfTab = library:addTab("Self")
-    local gSelf = selfTab:createGroup("left", "Self ESP")
+    local gMiscV = visTab:createGroup("center", "Misc")
+    tg(gMiscV, "Watermark", "Watermark_Enabled", function() return S.Watermark_Enabled end, function(b) S.Watermark_Enabled = b end)
+    tg(gMiscV, "Tracers", "Tracers_Enabled", function() return S.Tracers_Enabled end, function(b) S.Tracers_Enabled = b end)
+
+    -- правая колонка: Self + World
+    local gSelf = visTab:createGroup("right", "Self")
     tg(gSelf, "Enable Self ESP", "SelfESP_Enabled", function() return S.SelfESP_Enabled end, function(b) S.SelfESP_Enabled = b; refresh() end)
     gSelf:addColorpicker({ text = "Box Color", flag = "Self_Box", color = S.Self_Box_Color,
         callback = function(c) S.Self_Box_Color = c; refresh() end })
@@ -145,7 +148,7 @@ function UI.Build(deps, library)
     gSelf:addColorpicker({ text = "Weapon Color", flag = "Self_Weapon", color = S.Self_Weapon_Color,
         callback = function(c) S.Self_Weapon_Color = c; refresh() end })
 
-    local gMat = selfTab:createGroup("right", "Self Material")
+    local gMat = visTab:createGroup("right", "Self Material")
     tg(gMat, "Enable Self Material", "SelfChams_Enabled", function() return S.SelfChams_Enabled end, function(b)
         S.SelfChams_Enabled = b
         if not b then pcall(function() deps.Chams.RestoreSelf() end) end
@@ -158,27 +161,19 @@ function UI.Build(deps, library)
     gMat:addColorpicker({ text = "Color", flag = "SelfChams_Color", color = S.SelfChams_Color,
         callback = function(c) S.SelfChams_Color = c end })
 
-    -- ============ WORLD ============
-    local worldTab = library:addTab("World")
-    local gLight = worldTab:createGroup("left", "Lighting")
+    local gLight = visTab:createGroup("right", "Lighting")
     tg(gLight, "Fullbright", "Fullbright_Enabled", function() return S.Fullbright_Enabled end, function(b) S.Fullbright_Enabled = b end)
     tg(gLight, "Ambient", "Ambient_Enabled", function() return S.Ambient_Enabled end, function(b) S.Ambient_Enabled = b end)
     gLight:addColorpicker({ text = "Ambient Color", flag = "Ambient_Color", color = S.Ambient_Color,
         callback = function(c) S.Ambient_Color = c end })
 
-    local gChams = worldTab:createGroup("right", "Highlights")
+    local gChams = visTab:createGroup("right", "Highlights")
     tg(gChams, "Enemy Highlights", "Chams_Enabled", function() return S.Chams_Enabled end, function(b)
         S.Chams_Enabled = b
         if not b then pcall(function() deps.Chams.RestoreHighlights() end) end
     end)
     gChams:addColorpicker({ text = "Highlight Color", flag = "Chams_Color", color = S.Chams_Color,
         callback = function(c) S.Chams_Color = c end })
-
-    -- ============ MISC ============
-    local miscTab = library:addTab("Misc")
-    local gMisc = miscTab:createGroup("left", "Misc")
-    tg(gMisc, "Watermark", "Watermark_Enabled", function() return S.Watermark_Enabled end, function(b) S.Watermark_Enabled = b end)
-    tg(gMisc, "Tracers", "Tracers_Enabled", function() return S.Tracers_Enabled end, function(b) S.Tracers_Enabled = b end)
 
     -- ============ SETTINGS ============
     local setTab = library:addTab("Settings")
