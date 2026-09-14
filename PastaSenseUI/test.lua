@@ -9,22 +9,52 @@ local LibUrls = {
 	"https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/PastaSenseUI.lua",
 }
 
+-- качаем любым доступным способом: executor game:HttpGet,
+-- HttpGetAsync (Studio с включённым HTTP), request-style API
+local function httpGet(url)
+	if typeof(game.HttpGet) == "function" then
+		local ok, res = pcall(function() return game:HttpGet(url) end)
+		if ok and type(res) == "string" and #res > 0 then return res end
+	end
+	do
+		local ok, res = pcall(function() return game:HttpGetAsync(url) end)
+		if ok and type(res) == "string" and #res > 0 then return res end
+	end
+	local req = (syn and syn.request) or (http and http.request) or (getgenv and getgenv().request) or _G.request
+	if typeof(req) == "function" then
+		local ok, res = pcall(req, { Url = url, Method = "GET" })
+		if ok and res then
+			local body = (type(res) == "table" and res.Body) or res
+			if type(body) == "string" and #body > 0 then return body end
+		end
+	end
+	return nil
+end
+
+local compile = loadstring or load
+if not compile then
+	error("[pastasense] в этом окружении нет loadstring/load — нужен executor (Wave/Solara/Synapse) или Studio")
+end
+
 local Lib
 do
-	local lastErr
+	local lastErr = "no urls tried"
 	for _, url in ipairs(LibUrls) do
-		local ok, res = pcall(function()
-			return loadstring(game:HttpGet(url))()
-		end)
-		if ok and res then
-			Lib = res
-			break
+		local src = httpGet(url)
+		if not src then
+			lastErr = "скачивание не удалось (нет game:HttpGet / HttpGetAsync / request). Если это Studio — включи Game Settings -> Security -> Enable Studio Access to API Services и HTTP Requests"
 		else
-			lastErr = res
+			local ok, res = pcall(function() return compile(src)() end)
+			if ok and res then
+				Lib = res
+				break
+			else
+				lastErr = tostring(res)
+			end
 		end
 	end
 	if not Lib then
-		error("[pastasense] не смог загрузить библиотеку. Проверь URL: "
+		error("[pastasense] не смог загрузить библиотеку. URL: "
 			.. table.concat(LibUrls, ", ")
 			.. " | ошибка: " .. tostring(lastErr))
 	end
