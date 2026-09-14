@@ -1,13 +1,5 @@
 local Config = {}
 
-Config.ESP = {
-    TOP_OFFSET = Vector3.new(0, 3, 0),
-    BOTTOM_OFFSET = Vector3.new(0, 3.5, 0),
-    DISTANCE_DIVISOR = 3.5,
-    MIN_HEIGHT = 6,
-    MIN_WIDTH = 4,
-}
-
 Config.S = {
     Aimbot_Enabled = false,
     Aimbot_WallCheck = true,
@@ -33,7 +25,6 @@ Config.S = {
     Ambient_Enabled = false,
     Ambient_Color = Color3.fromRGB(128, 128, 128),
     Chams_Enabled = false,
-    Chams_Material = "ForceField",
     Chams_Color = Color3.fromRGB(255, 255, 255),
     SelfChams_Enabled = false,
     SelfChams_Material = "ForceField",
