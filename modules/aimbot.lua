@@ -7,12 +7,18 @@ local UserInputService = game:GetService("UserInputService")
 function Aimbot.New(S, connections, rayParams)
     local M = {}
     M.Visibility_Cache = {}
-    M.FOVCircle = Drawing.new("Circle")
-    M.FOVCircle.Thickness = 1
-    M.FOVCircle.Color = Color3.fromRGB(255, 255, 255)
-    M.FOVCircle.Transparency = 1
-    M.FOVCircle.Filled = false
-    M.FOVCircle.Visible = false
+
+    local circleOk, circle = pcall(function() return Drawing.new("Circle") end)
+    if circleOk and circle then
+        M.FOVCircle = circle
+        circle.Thickness = 1
+        circle.Color = Color3.fromRGB(255, 255, 255)
+        circle.Transparency = 1
+        circle.Filled = false
+        circle.Visible = false
+    else
+        M.FOVCircle = nil
+    end
 
     function M.GetVisibility(targetId, char)
         local currentTime = tick()
@@ -103,10 +109,12 @@ function Aimbot.New(S, connections, rayParams)
     end
 
     function M.UpdateFOV()
-        M.FOVCircle.Visible = S.Show_FOV
+        local fc = M.FOVCircle
+        if not fc then return end
+        fc.Visible = S.Show_FOV
         if S.Show_FOV then
-            M.FOVCircle.Position = UserInputService:GetMouseLocation()
-            M.FOVCircle.Radius = S.Aimbot_ToggleMode and S.Aim_FOV_Toggle or S.Aim_FOV_Hold
+            fc.Position = UserInputService:GetMouseLocation()
+            fc.Radius = S.Aimbot_ToggleMode and S.Aim_FOV_Toggle or S.Aim_FOV_Hold
         end
     end
 
