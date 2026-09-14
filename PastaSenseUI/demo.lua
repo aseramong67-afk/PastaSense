@@ -36,10 +36,16 @@ local Win = Lib:CreateWindow({
 })
 
 -- ================= RAGE (главный скрин) =================
+-- Иконки: SVG напрямую нельзя — скачай PNG с icons8, залей как Decal в Roblox
+-- и подставь ID: Icon = "rbxassetid://123456789" (или просто числом).
 local Rage = Win:AddTab({ Name = "rage", Icon = "+" })
+-- пример с картинками:
+-- local Rage = Win:AddTab({ Name = "rage", Icon = "rbxassetid://123456789" })
 
 Rage:AddWeaponBar(
 	{ "pistols", "rifles", "smgs", "heavies", "shotguns", "scout", "awp", "autos" },
+	-- пример с картинками стволов:
+	-- { {Name="pistols", Icon="rbxassetid://111"}, {Name="rifles", Icon="rbxassetid://222"} },
 	function(current)
 		print("[weapon]", current)
 	end

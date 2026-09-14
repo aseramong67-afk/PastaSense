@@ -80,6 +80,54 @@ local function Label(parent, text, size, color, font, align)
 	return l
 end
 
+-- Icons: SVG напрямую Roblox не ест. Конвертируй в PNG, залей как Decal,
+-- передавай сюда "rbxassetid://123..." (или число / строку с цифрами).
+local function isImageIcon(icon)
+	if type(icon) == "number" then return true end
+	if type(icon) ~= "string" then return false end
+	local s = string.lower(icon)
+	return string.sub(s, 1, 11) == "rbxassetid"
+		or string.sub(s, 1, 6) == "rbx://"
+		or tonumber(icon) ~= nil
+end
+
+local function normImage(icon)
+	if type(icon) == "number" or tonumber(icon) then
+		return "rbxassetid://" .. tostring(icon)
+	end
+	return icon
+end
+
+-- Слот 30px под иконку слева в кнопке таба: картинка или текстовый глиф.
+-- Возвращает созданный объект (ImageLabel / TextLabel).
+local function TabIcon(parent, icon, tint)
+	if isImageIcon(icon) then
+		local img = Instance.new("ImageLabel")
+		img.Size = UDim2.new(0, 18, 0, 18)
+		img.AnchorPoint = Vector2.new(0, 0.5)
+		img.Position = UDim2.new(0, 10, 0.5, 0)
+		img.BackgroundTransparency = 1
+		img.Image = normImage(icon)
+		img.ImageColor3 = tint or Theme.Hint
+		img.ScaleType = Enum.ScaleType.Fit
+		img.Parent = parent
+		return img
+	end
+	local l = Label(parent, tostring(icon), 14, tint or Theme.Hint, Enum.Font.GothamBold, Enum.TextXAlignment.Center)
+	l.Size = UDim2.new(0, 30, 1, 0)
+	l.Position = UDim2.new(0, 4, 0, 0)
+	return l
+end
+
+local function paintTabIcon(iconObj, color)
+	if not iconObj then return end
+	if iconObj:IsA("ImageLabel") then
+		iconObj.ImageColor3 = color
+	elseif iconObj:IsA("TextLabel") then
+		iconObj.TextColor3 = color
+	end
+end
+
 local function protectGui(gui)
 	pcall(function()
 		local gethui = (getgenv and getgenv().gethui) or _G.gethui
@@ -339,9 +387,7 @@ function PastaSenseUI:CreateWindow(opts)
 		Btn.Parent = TabList
 		Corner(Btn, 8)
 
-		local IconL = Label(Btn, tabIcon, 14, Theme.Hint, Enum.Font.GothamBold, Enum.TextXAlignment.Center)
-		IconL.Size = UDim2.new(0, 30, 1, 0)
-		IconL.Position = UDim2.new(0, 4, 0, 0)
+		local IconL = TabIcon(Btn, tabIcon, Theme.Hint)
 
 		local NameL = Label(Btn, tabName, 13, Theme.Hint, Enum.Font.GothamMedium)
 		NameL.Size = UDim2.new(1, -40, 1, 0)
@@ -390,6 +436,8 @@ function PastaSenseUI:CreateWindow(opts)
 		Tab.Name = tabName
 		Tab._page = Page
 		Tab._button = Btn
+		Tab._icon = IconL
+		Tab._name = NameL
 		Tab._elements = {}
 		Tab._weaponButtons = {}
 		Tab._weaponCallback = nil
@@ -824,30 +872,63 @@ function PastaSenseUI:CreateWindow(opts)
 			return self._left, self._right
 		end
 
-		-- weapon pill-bar like screenshot
+		-- weapon pill-bar like screenshot.
+		-- items: {"pistols", ...} или {{Name="pistols", Icon="rbxassetid://..."}, ...}
 		function Tab:AddWeaponBar(items, callback)
 			WeaponBarHolder.Visible = true
 			Columns.Size = UDim2.new(1, 0, 1, -46)
 			self._weaponCallback = callback
-			for i, itemName in ipairs(items) do
+			local function paintWeapon(rec, active)
+				rec.Btn.BackgroundColor3 = active and Theme.Accent or Theme.Sidebar
+				local txtColor = active and Theme.AccentText or Theme.Hint
+				if rec.Txt then rec.Txt.TextColor3 = txtColor end
+				if rec.Btn and not rec.Txt then rec.Btn.TextColor3 = txtColor end
+				if rec.Img then rec.Img.ImageColor3 = active and Theme.AccentText or Theme.Hint end
+			end
+			for i, item in ipairs(items) do
+				local itemName, itemIcon
+				if type(item) == "table" then
+					itemName = item.Name or item[1]
+					itemIcon = item.Icon or item.Image or item[2]
+				else
+					itemName = item
+				end
+				local hasImg = isImageIcon(itemIcon)
 				local B = Instance.new("TextButton")
-				B.Size = UDim2.new(0, 110, 0, 28)
+				B.Size = UDim2.new(0, hasImg and 140 or 110, 0, 28)
 				B.BackgroundColor3 = (i == 1) and Theme.Accent or Theme.Sidebar
-				B.Text = tostring(itemName)
-				B.Font = Enum.Font.GothamMedium
-				B.TextSize = 12
-				B.TextColor3 = (i == 1) and Theme.AccentText or Theme.Hint
 				B.AutoButtonColor = false
+				B.Text = ""
 				B.Parent = WeaponScroll
 				Corner(B, 14)
-				table.insert(self._weaponButtons, B)
+				local rec = { Btn = B, Name = itemName }
+				if hasImg then
+					local Img = Instance.new("ImageLabel")
+					Img.Size = UDim2.new(0, 20, 0, 20)
+					Img.AnchorPoint = Vector2.new(0, 0.5)
+					Img.Position = UDim2.new(0, 10, 0.5, 0)
+					Img.BackgroundTransparency = 1
+					Img.Image = normImage(itemIcon)
+					Img.ScaleType = Enum.ScaleType.Fit
+					Img.Parent = B
+					rec.Img = Img
+					local T = Label(B, tostring(itemName), 12, Theme.Hint, Enum.Font.GothamMedium)
+					T.Size = UDim2.new(1, -38, 1, 0)
+					T.Position = UDim2.new(0, 34, 0, 0)
+					rec.Txt = T
+				else
+					B.Text = tostring(itemName)
+					B.Font = Enum.Font.GothamMedium
+					B.TextSize = 12
+					B.TextColor3 = Theme.Hint
+				end
+				table.insert(self._weaponButtons, rec)
+				paintWeapon(rec, i == 1)
 				B.MouseButton1Click:Connect(function()
 					for _, other in ipairs(self._weaponButtons) do
-						other.BackgroundColor3 = Theme.Sidebar
-						other.TextColor3 = Theme.Hint
+						paintWeapon(other, false)
 					end
-					B.BackgroundColor3 = Theme.Accent
-					B.TextColor3 = Theme.AccentText
+					paintWeapon(rec, true)
 					if self._weaponCallback then pcall(self._weaponCallback, itemName) end
 				end)
 			end
@@ -863,15 +944,13 @@ function PastaSenseUI:CreateWindow(opts)
 			for _, t in ipairs(Window._tabs) do
 				t._page.Visible = false
 				t._button.BackgroundColor3 = Theme.Sidebar
-				for _, ch in ipairs(t._button:GetChildren()) do
-					if ch:IsA("TextLabel") then ch.TextColor3 = Theme.Hint end
-				end
+				paintTabIcon(t._icon, Theme.Hint)
+				if t._name then t._name.TextColor3 = Theme.Hint end
 			end
 			Page.Visible = true
 			Btn.BackgroundColor3 = Theme.Card
-			for _, ch in ipairs(Btn:GetChildren()) do
-				if ch:IsA("TextLabel") then ch.TextColor3 = Theme.Text end
-			end
+			paintTabIcon(IconL, Theme.Text)
+			NameL.TextColor3 = Theme.Text
 			Window._activeTab = Tab
 			CurrentTabLabel.Text = tabName
 			SearchBox.Text = ""
