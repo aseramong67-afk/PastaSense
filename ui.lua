@@ -200,6 +200,9 @@ function UI.Build(deps, library)
             if deps.Main and deps.Main.Unload then deps.Main.Unload()
             elseif getgenv().PastaUnload then getgenv().PastaUnload() end
         end)
+        pcall(function()
+            game:GetService("UserInputService").MouseBehavior = getgenv().PastaMouseBehavior or Enum.MouseBehavior.LockCenter
+        end)
         pcall(function() if library.gui then library.gui:Destroy() end end)
     end })
 
@@ -218,29 +221,25 @@ function UI.Build(deps, library)
         end
     end)
 
-    -- курсор: пока меню открыто — свободный (Default), закрыли — вернуть захват (LockCenter),
-    -- иначе камера после закрытия вертится только с зажатой ПКМ.
-    -- поллером, а не разовым сигналом: игра может перетирать поведение мыши после нашей установки
+    -- курсор: пока меню открыто — свободный (Default), при закрытии/Unload —
+    -- вернуть то поведение, что было до открытия меню (без поллера: игра/движок
+    -- сами держат своё значение, бороться с ними таймером только хуже)
     pcall(function()
         local uis = game:GetService("UserInputService")
         local gui = library.gui
         if not gui then return end
-        getgenv().PastaMouseTick = (getgenv().PastaMouseTick or 0) + 1
-        local myTick = getgenv().PastaMouseTick
-        task.spawn(function()
-            while myTick == getgenv().PastaMouseTick and gui.Parent do
-                pcall(function()
-                    if gui.Enabled then
-                        if uis.MouseBehavior ~= Enum.MouseBehavior.Default then
-                            uis.MouseBehavior = Enum.MouseBehavior.Default
-                        end
-                    elseif uis.MouseBehavior == Enum.MouseBehavior.Default then
-                        uis.MouseBehavior = Enum.MouseBehavior.LockCenter
-                    end
-                end)
-                task.wait(0.2)
-            end
-        end)
+        getgenv().PastaMouseBehavior = uis.MouseBehavior
+        local function apply()
+            pcall(function()
+                if gui.Enabled then
+                    uis.MouseBehavior = Enum.MouseBehavior.Default
+                else
+                    uis.MouseBehavior = getgenv().PastaMouseBehavior
+                end
+            end)
+        end
+        gui:GetPropertyChangedSignal("Enabled"):Connect(apply)
+        apply()
     end)
 
     return library
