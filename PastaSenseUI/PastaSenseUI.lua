@@ -5,7 +5,7 @@
 		local Lib = loadstring(game:HttpGet("YOUR_RAW_URL/PastaSenseUI.lua"))()
 		local Win = Lib:CreateWindow({ Name = "pastasense", User = "mamasha", ToggleKey = Enum.KeyCode.Insert })
 		local Rage = Win:AddTab({ Name = "rage", Icon = "+" })
-		... see example.lua
+		... see demo.lua
 	Executor friendly: gethui / protect_gui / writefile guarded with pcall.
 ]]
 

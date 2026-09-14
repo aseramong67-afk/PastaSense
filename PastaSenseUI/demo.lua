@@ -1,6 +1,6 @@
--- example.lua — демо PastaSenseUI 1в1 как на скриншоте
+-- demo.lua — демо PastaSenseUI 1в1 как на скриншоте
 -- Запуск в инжекторе одной строкой:
---   loadstring(game:HttpGet("https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/example.lua"))()
+--   loadstring(game:HttpGet("https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/demo.lua"))()
 
 local LIB_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/PastaSenseUI.lua"
 
