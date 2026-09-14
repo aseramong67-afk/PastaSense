@@ -224,23 +224,28 @@ function UI.Build(deps, library)
     end)
 
     -- курсор: пока меню открыто — свободный (Default), закрыли — вернуть захват (LockCenter),
-    -- иначе камера после закрытия вертится только с зажатой ПКМ
+    -- иначе камера после закрытия вертится только с зажатой ПКМ.
+    -- поллером, а не разовым сигналом: игра может перетирать поведение мыши после нашей установки
     pcall(function()
         local uis = game:GetService("UserInputService")
         local gui = library.gui
-        if gui then
-            local function apply()
+        if not gui then return end
+        getgenv().PastaMouseTick = (getgenv().PastaMouseTick or 0) + 1
+        local myTick = getgenv().PastaMouseTick
+        task.spawn(function()
+            while myTick == getgenv().PastaMouseTick and gui.Parent do
                 pcall(function()
                     if gui.Enabled then
-                        uis.MouseBehavior = Enum.MouseBehavior.Default
-                    else
+                        if uis.MouseBehavior ~= Enum.MouseBehavior.Default then
+                            uis.MouseBehavior = Enum.MouseBehavior.Default
+                        end
+                    elseif uis.MouseBehavior == Enum.MouseBehavior.Default then
                         uis.MouseBehavior = Enum.MouseBehavior.LockCenter
                     end
                 end)
+                task.wait(0.2)
             end
-            gui:GetPropertyChangedSignal("Enabled"):Connect(apply)
-            apply()
-        end
+        end)
     end)
 
     return library
