@@ -23,7 +23,7 @@ local tabviewer = menu.bg.bg.bg.bg.tabbuttons
 
 
 inputService.InputEnded:Connect(function(key)
-    if key.KeyCode == Enum.KeyCode.RightShift then
+    if key.KeyCode == (library.flags.MenuBind or Enum.KeyCode.RightShift) then
         menu.Enabled = not menu.Enabled
         library.scrolling = false
         library.colorpicking = false

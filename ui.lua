@@ -179,7 +179,28 @@ function UI.Build(deps, library)
     local gMisc = miscTab:createGroup("left", "Misc")
     tg(gMisc, "Watermark", "Watermark_Enabled", function() return S.Watermark_Enabled end, function(b) S.Watermark_Enabled = b end)
     tg(gMisc, "Tracers", "Tracers_Enabled", function() return S.Tracers_Enabled end, function(b) S.Tracers_Enabled = b end)
-    gMisc:addButton({ text = "Unload", callback = function()
+
+    -- ============ SETTINGS ============
+    local setTab = library:addTab("Settings")
+    local gMenu = setTab:createGroup("left", "Menu")
+    gMenu:addKeybind({ text = "Menu Bind", flag = "MenuBind", key = Enum.KeyCode.RightShift })
+    gMenu:addColorpicker({
+        text = "Menu Accent", flag = "MenuAccent", color = Color3.fromRGB(155, 150, 219),
+        callback = function(c)
+            pcall(function()
+                local old = library.libColor
+                library.libColor = c
+                if library.gui then
+                    for _, ins in ipairs(library.gui:GetDescendants()) do
+                        if ins:IsA("GuiObject") and ins.BackgroundColor3 == old then
+                            ins.BackgroundColor3 = c
+                        end
+                    end
+                end
+            end)
+        end,
+    })
+    gMenu:addButton({ text = "Unload", callback = function()
         pcall(function()
             if deps.Main and deps.Main.Unload then deps.Main.Unload()
             elseif getgenv().PastaUnload then getgenv().PastaUnload() end
