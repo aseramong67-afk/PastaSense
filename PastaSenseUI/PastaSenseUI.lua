@@ -11,7 +11,7 @@
 
 local PastaSenseUI = {}
 PastaSenseUI.__index = PastaSenseUI
-PastaSenseUI.Version = "1.5.1"
+PastaSenseUI.Version = "1.5.2"
 PastaSenseUI.Flags = {} -- flag -> { Value = any, Set = fn }
 
 -- // Services
@@ -366,15 +366,15 @@ function PastaSenseUI:CreateWindow(opts)
 	Shadow.Parent = Main
 	Corner(Shadow, 15)
 
-	-- Снежинки поверх меню (мелкие белые точки, не кликабельны)
+	-- Снежинки на фоне (поверх блюра, под меню; мелкие белые точки, не кликабельны)
 	local Snow = Instance.new("Frame")
 	Snow.Name = "Snow"
 	Snow.Size = UDim2.new(1, 0, 1, 0)
+	Snow.Position = UDim2.new(0, 0, 0, 0)
 	Snow.BackgroundTransparency = 1
 	Snow.ClipsDescendants = true
-	Snow.ZIndex = 50
-	Snow.Parent = Main
-	Corner(Snow, 12)
+	Snow.ZIndex = 0
+	Snow.Parent = ScreenGui
 	task.spawn(function()
 		local flakes = {}
 		for i = 1, 45 do
