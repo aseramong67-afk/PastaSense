@@ -2,7 +2,7 @@
 -- Запуск в инжекторе одной строкой:
 --   loadstring(game:HttpGet("https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/demo.lua"))()
 
-local LIB_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/PastaSenseUI.lua"
+local LIB_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/PastaSenseUI.lua?v=1.0.1"
 
 local function fetch(url)
 	local ok, res = pcall(function() return game:HttpGet(url) end)
@@ -21,6 +21,7 @@ end
 local src = fetch(LIB_URL)
 assert(src, "[pastasense] не скачалась библиотека с гита")
 local Lib = assert(loadstring(src))()
+print("[pastasense] lib version:", Lib.Version)
 
 -- выгрузка прошлой копии
 pcall(function()
