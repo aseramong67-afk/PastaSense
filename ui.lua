@@ -494,21 +494,17 @@ function UI.Build(deps, library)
         })
     end
 
-    -- init_config вызывает delfile/readfile/writefile — оборачиваем в pcall,
-    -- чтобы не падать, если executor не поддерживает filesystem API
-    local cfgOk = pcall(function() library:init_config(window) end)
-    if not cfgOk then
-        window:seperator({ name = "Settings" })
-        local sPage = window:tab({ name = "Configs", tabs = { "Main" } })
-        local sCol = sPage:column({})
-        local sSec = sCol:section({ name = "Settings", default = true, size = 0.5 })
-        sSec:colorpicker({
-            name = "Menu Accent",
-            color = Color3.fromRGB(155, 150, 219),
-            seperator = true,
-            callback = function(color) pcall(function() library:update_theme("accent", color) end) end,
-        })
-    end
+    -- init_config создаёт кнопку Delete с delfile, которая падает — делаем свою вкладку
+    window:seperator({ name = "Settings" })
+    local sPage = window:tab({ name = "Configs", tabs = { "Main" } })
+    local sCol = sPage:column({})
+    local sSec = sCol:section({ name = "Settings", default = true, size = 0.5 })
+    sSec:colorpicker({
+        name = "Menu Accent",
+        color = Color3.fromRGB(155, 150, 219),
+        seperator = true,
+        callback = function(color) pcall(function() library:update_theme("accent", color) end) end,
+    })
 
     return window
 end
