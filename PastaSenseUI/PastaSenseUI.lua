@@ -11,7 +11,7 @@
 
 local PastaSenseUI = {}
 PastaSenseUI.__index = PastaSenseUI
-PastaSenseUI.Version = "1.3.2"
+PastaSenseUI.Version = "1.4.0"
 PastaSenseUI.Flags = {} -- flag -> { Value = any, Set = fn }
 
 -- // Services
@@ -964,8 +964,8 @@ function PastaSenseUI:CreateWindow(opts)
 				Label(Card, name, 13, Theme.Text, Enum.Font.GothamMedium).Size = UDim2.new(1, -50, 1, 0)
 				local Prev = Instance.new("TextButton")
 				Prev.Size = UDim2.new(0, 28, 0, 28)
-				Prev.AnchorPoint = Vector2.new(1, 0.5)
-				Prev.Position = UDim2.new(1, 0, 0.5, 0)
+				Prev.AnchorPoint = Vector2.new(1, 0)
+				Prev.Position = UDim2.new(1, 0, 0, 8)
 				Prev.BackgroundColor3 = def
 				Prev.Text = ""
 				Prev.AutoButtonColor = false
@@ -976,20 +976,198 @@ function PastaSenseUI:CreateWindow(opts)
 					Color3.fromRGB(255,255,255), Color3.fromRGB(180,255,120),
 					Color3.fromRGB(255,120,120), Color3.fromRGB(120,180,255),
 					Color3.fromRGB(255,220,120), Color3.fromRGB(200,120,255),
+					Color3.fromRGB(0,0,0), Color3.fromRGB(130,130,130),
 				}
-				local idx = 1
+
+				local OPEN_H = 254
+				local current = def
+				local ch, cs, cv = def:ToHSV()
+
+				-- Раскрывайка под карточкой (клик по превью)
+				local Picker = Instance.new("Frame")
+				Picker.Size = UDim2.new(1, 0, 0, 0)
+				Picker.Position = UDim2.new(0, 0, 0, 44)
+				Picker.BackgroundTransparency = 1
+				Picker.Visible = false
+				Picker.ClipsDescendants = true
+				Picker.Parent = Card
+
+				-- SV-квадрат: белый фон x градиент белый->hue, сверху чёрный градиент (value)
+				local SV = Instance.new("TextButton")
+				SV.Size = UDim2.new(1, 0, 0, 130)
+				SV.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				SV.Text = ""
+				SV.AutoButtonColor = false
+				SV.Parent = Picker
+				Corner(SV, 8)
+				local SatGrad = Instance.new("UIGradient")
+				SatGrad.Color = ColorSequence.new({
+					ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+					ColorSequenceKeypoint.new(1, Color3.fromHSV(ch, 1, 1)),
+				})
+				SatGrad.Parent = SV
+				local Val = Instance.new("Frame")
+				Val.Size = UDim2.new(1, 0, 1, 0)
+				Val.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+				Val.BorderSizePixel = 0
+				Val.Parent = SV
+				Corner(Val, 8)
+				local ValGrad = Instance.new("UIGradient")
+				ValGrad.Rotation = 90
+				ValGrad.Transparency = NumberSequence.new({
+					NumberSequenceKeypoint.new(0, 1),
+					NumberSequenceKeypoint.new(1, 0),
+				})
+				ValGrad.Parent = Val
+				local SVCursor = Instance.new("Frame")
+				SVCursor.Size = UDim2.new(0, 12, 0, 12)
+				SVCursor.AnchorPoint = Vector2.new(0.5, 0.5)
+				SVCursor.BackgroundTransparency = 1
+				SVCursor.Parent = SV
+				Corner(SVCursor, 6)
+				local SVRing = Instance.new("UIStroke")
+				SVRing.Color = Color3.fromRGB(255, 255, 255)
+				SVRing.Thickness = 2
+				SVRing.Parent = SVCursor
+
+				-- Полоса hue (радуга)
+				local Hue = Instance.new("TextButton")
+				Hue.Size = UDim2.new(1, 0, 0, 14)
+				Hue.Position = UDim2.new(0, 0, 0, 138)
+				Hue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				Hue.Text = ""
+				Hue.AutoButtonColor = false
+				Hue.Parent = Picker
+				Corner(Hue, 7)
+				local HueGrad = Instance.new("UIGradient")
+				HueGrad.Color = ColorSequence.new({
+					ColorSequenceKeypoint.new(0, Color3.fromHSV(0, 1, 1)),
+					ColorSequenceKeypoint.new(0.17, Color3.fromHSV(0.17, 1, 1)),
+					ColorSequenceKeypoint.new(0.33, Color3.fromHSV(0.33, 1, 1)),
+					ColorSequenceKeypoint.new(0.5, Color3.fromHSV(0.5, 1, 1)),
+					ColorSequenceKeypoint.new(0.67, Color3.fromHSV(0.67, 1, 1)),
+					ColorSequenceKeypoint.new(0.83, Color3.fromHSV(0.83, 1, 1)),
+					ColorSequenceKeypoint.new(1, Color3.fromHSV(1, 1, 1)),
+				})
+				HueGrad.Parent = Hue
+				local HueCursor = Instance.new("Frame")
+				HueCursor.Size = UDim2.new(0, 4, 0, 20)
+				HueCursor.AnchorPoint = Vector2.new(0.5, 0.5)
+				HueCursor.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				HueCursor.BorderSizePixel = 0
+				HueCursor.Parent = Hue
+				Corner(HueCursor, 2)
+				local HueRing = Instance.new("UIStroke")
+				HueRing.Color = Color3.fromRGB(120, 120, 120)
+				HueRing.Thickness = 1
+				HueRing.Parent = HueCursor
+
+				-- Пресеты + RGB-подпись
+				local PresetRow = Instance.new("Frame")
+				PresetRow.Size = UDim2.new(1, 0, 0, 24)
+				PresetRow.Position = UDim2.new(0, 0, 0, 160)
+				PresetRow.BackgroundTransparency = 1
+				PresetRow.Parent = Picker
+				local PresetLayout = Instance.new("UIListLayout")
+				PresetLayout.FillDirection = Enum.FillDirection.Horizontal
+				PresetLayout.Padding = UDim.new(0, 6)
+				PresetLayout.Parent = PresetRow
+				local RGBLabel = Label(Picker, "", 11, Theme.Hint, Enum.Font.Gotham)
+				RGBLabel.Size = UDim2.new(1, 0, 0, 14)
+				RGBLabel.Position = UDim2.new(0, 0, 0, 188)
+
+				local function refresh()
+					Prev.BackgroundColor3 = current
+					SatGrad.Color = ColorSequence.new({
+						ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+						ColorSequenceKeypoint.new(1, Color3.fromHSV(ch, 1, 1)),
+					})
+					SVCursor.Position = UDim2.new(cs, 0, 1 - cv, 0)
+					HueCursor.Position = UDim2.new(ch, 0, 0.5, 0)
+					local r = math.floor(current.R * 255 + 0.5)
+					local g = math.floor(current.G * 255 + 0.5)
+					local b = math.floor(current.B * 255 + 0.5)
+					RGBLabel.Text = r .. ", " .. g .. ", " .. b
+				end
 				local function apply(v, silent)
-					Prev.BackgroundColor3 = v
+					if typeof(v) ~= "Color3" then return end
+					current = v
+					ch, cs, cv = v:ToHSV()
+					refresh()
 					PastaSenseUI.Flags[flag] = { Value = v, Set = apply }
 					if not silent then pcall(cb, v) end
 				end
-				Prev.MouseButton1Click:Connect(function()
-					idx = idx % #presets + 1
-					apply(presets[idx])
+				for _, pc in ipairs(presets) do
+					local PB = Instance.new("TextButton")
+					PB.Size = UDim2.new(0, 24, 0, 24)
+					PB.BackgroundColor3 = pc
+					PB.Text = ""
+					PB.AutoButtonColor = false
+					PB.Parent = PresetRow
+					Corner(PB, 6)
+					PB.MouseButton1Click:Connect(function() apply(pc) end)
+				end
+
+				local function lockScroll(v)
+					pcall(function() Scroll.ScrollingEnabled = not v end)
+				end
+				local function isPress(input)
+					return input.UserInputType == Enum.UserInputType.MouseButton1
+						or input.UserInputType == Enum.UserInputType.Touch
+				end
+				local function isMove(input)
+					return input.UserInputType == Enum.UserInputType.MouseMovement
+						or input.UserInputType == Enum.UserInputType.Touch
+				end
+				local dragSV, dragHue = false, false
+				local function updateSV(input)
+					local p, s = SV.AbsolutePosition, SV.AbsoluteSize
+					local sx = math.clamp((input.Position.X - p.X) / math.max(s.X, 1), 0, 1)
+					local sy = math.clamp((input.Position.Y - p.Y) / math.max(s.Y, 1), 0, 1)
+					apply(Color3.fromHSV(ch, sx, 1 - sy))
+				end
+				local function updateHue(input)
+					local p, s = Hue.AbsolutePosition, Hue.AbsoluteSize
+					local t = math.clamp((input.Position.X - p.X) / math.max(s.X, 1), 0, 1)
+					apply(Color3.fromHSV(t, cs, cv))
+				end
+				SV.InputBegan:Connect(function(input)
+					if isPress(input) then dragSV = true lockScroll(true) updateSV(input) end
 				end)
-				registerFlag(flag, def, apply)
-				pcall(cb, def)
-				return { Set = apply }
+				Hue.InputBegan:Connect(function(input)
+					if isPress(input) then dragHue = true lockScroll(true) updateHue(input) end
+				end)
+				UserInputService.InputEnded:Connect(function(input)
+					if isPress(input) and (dragSV or dragHue) then
+						dragSV, dragHue = false, false
+						lockScroll(false)
+					end
+				end)
+				UserInputService.InputChanged:Connect(function(input)
+					if not isMove(input) then return end
+					if dragSV then updateSV(input)
+					elseif dragHue then updateHue(input) end
+				end)
+
+				local open = false
+				Prev.MouseButton1Click:Connect(function()
+					open = not open
+					Picker.Visible = true
+					if open then
+						tween(Card, { Size = UDim2.new(1, 0, 0, OPEN_H) }, 0.18)
+						tween(Picker, { Size = UDim2.new(1, 0, 0, OPEN_H - 44) }, 0.18)
+					else
+						tween(Card, { Size = UDim2.new(1, 0, 0, 44) }, 0.18)
+						tween(Picker, { Size = UDim2.new(1, 0, 0, 0) }, 0.18)
+						task.delay(0.18, function()
+							if not open then Picker.Visible = false end
+						end)
+					end
+				end)
+				refresh()
+				registerFlag(flag, current, apply)
+				pcall(cb, current)
+				return { Set = apply, Get = function() return current end }
 			end
 
 			function Col:Textbox(o)
