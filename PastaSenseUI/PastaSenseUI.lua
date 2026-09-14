@@ -11,7 +11,7 @@
 
 local PastaSenseUI = {}
 PastaSenseUI.__index = PastaSenseUI
-PastaSenseUI.Version = "1.8.0"
+PastaSenseUI.Version = "1.8.1"
 PastaSenseUI.Flags = {} -- flag -> { Value = any, Set = fn }
 
 -- // Services
@@ -115,21 +115,36 @@ local function normImage(icon)
 end
 
 -- // Кастомные иконки через workspace инжектора.
--- Схема: скачали PNG по URL через game:HttpGet -> writefile("PastaSenseUI/icons/<key>.png")
+-- Схема: скачали PNG по URL через game:HttpGet -> writefile("PastaSenseUI/icons/<pack>/<key>.png")
 -- -> ImageLabel.Image = getcustomasset(path). Повторно не качаем, только если файла нет.
+-- Папка версионирована (ICON_PACK): при смене пака старые файлы не переиспользуются.
 -- Работает там где есть writefile/isfile/getcustomasset (Wave/Solara/Synapse и т.п.),
 -- иначе тихо возвращаем nil и рисуется текстовый глиф.
-local ICON_FOLDER = "PastaSenseUI/icons"
+local ICON_PACK = "v2"
+local ICON_FOLDER = "PastaSenseUI/icons/" .. ICON_PACK
+local LEGACY_KEYS = { "rage", "legit", "visuals", "miscellaneous", "config", "inventory", "movement", "scripts", "panel" }
+
+-- Удаляет PNG прошлого пака (лежали прямо в PastaSenseUI/icons/)
+local function cleanupLegacyIcons()
+	pcall(function()
+		if typeof(delfile) ~= "function" or typeof(isfile) ~= "function" then return end
+		for _, k in ipairs(LEGACY_KEYS) do
+			local old = "PastaSenseUI/icons/" .. k .. ".png"
+			if isfile(old) then delfile(old) end
+		end
+	end)
+end
 
 local function ensureIconFolder()
 	pcall(function()
 		if typeof(makefolder) ~= "function" then return end
-		if typeof(isfolder) == "function" then
-			if not isfolder("PastaSenseUI") then makefolder("PastaSenseUI") end
-			if not isfolder(ICON_FOLDER) then makefolder(ICON_FOLDER) end
-		else
-			makefolder("PastaSenseUI")
-			makefolder(ICON_FOLDER)
+		local parts = { "PastaSenseUI", "PastaSenseUI/icons", ICON_FOLDER }
+		for _, dir in ipairs(parts) do
+			local need = true
+			if typeof(isfolder) == "function" then
+				need = not isfolder(dir)
+			end
+			if need then makefolder(dir) end
 		end
 	end)
 end
@@ -247,7 +262,7 @@ local function TabIcon(parent, icon, tint, key)
 	local image = resolveIcon(icon, key)
 	if image then
 		local img = Instance.new("ImageLabel")
-		img.Size = UDim2.new(0, 18, 0, 18)
+		img.Size = UDim2.new(0, 20, 0, 20)
 		img.AnchorPoint = Vector2.new(0, 0.5)
 		img.Position = UDim2.new(0, 10, 0.5, 0)
 		img.BackgroundTransparency = 1
@@ -339,6 +354,7 @@ function PastaSenseUI:CreateWindow(opts)
 		Blur.Size = 14
 		Blur.Parent = Lighting
 	end)
+	cleanupLegacyIcons()
 
 	-- Main
 	local Main = Instance.new("Frame")
