@@ -11,7 +11,7 @@
 
 local PastaSenseUI = {}
 PastaSenseUI.__index = PastaSenseUI
-PastaSenseUI.Version = "1.3.1"
+PastaSenseUI.Version = "1.3.2"
 PastaSenseUI.Flags = {} -- flag -> { Value = any, Set = fn }
 
 -- // Services
@@ -654,6 +654,10 @@ function PastaSenseUI:CreateWindow(opts)
 				Knob.BorderSizePixel = 0
 				Knob.Parent = Pill
 				Corner(Knob, 10)
+				local KnobStroke = Instance.new("UIStroke")
+				KnobStroke.Color = Color3.fromRGB(170, 170, 170)
+				KnobStroke.Thickness = 1
+				KnobStroke.Parent = Knob
 
 				local state = def
 				local function apply(v, silent)
@@ -697,12 +701,11 @@ function PastaSenseUI:CreateWindow(opts)
 				VL.Size = UDim2.new(0, 60, 1, 0)
 				VL.Position = UDim2.new(1, -60, 0, 0)
 
-				local BarBg = Instance.new("TextButton")
+				local BarBg = Instance.new("Frame")
 				BarBg.Size = UDim2.new(1, 0, 0, 4)
 				BarBg.Position = UDim2.new(0, 0, 0, 34)
 				BarBg.BackgroundColor3 = Color3.fromRGB(65, 65, 65)
-				BarBg.Text = ""
-				BarBg.AutoButtonColor = false
+				BarBg.BorderSizePixel = 0
 				BarBg.Parent = Card
 				Corner(BarBg, 2)
 
@@ -720,6 +723,10 @@ function PastaSenseUI:CreateWindow(opts)
 				Knob.BorderSizePixel = 0
 				Knob.Parent = BarBg
 				Corner(Knob, 8)
+				local KnobStroke = Instance.new("UIStroke")
+				KnobStroke.Color = Color3.fromRGB(170, 170, 170)
+				KnobStroke.Thickness = 1
+				KnobStroke.Parent = Knob
 
 				local value = def
 				local function render()
@@ -740,6 +747,16 @@ function PastaSenseUI:CreateWindow(opts)
 				registerFlag(flag, value, apply)
 				pcall(cb, value)
 
+				-- Невидимая широкая зона захвата: по тонкой полосе (4px) сложно попасть,
+				-- а скролл колонки перехватывает драг. На время драга скролл выключаем.
+				local Hitbox = Instance.new("TextButton")
+				Hitbox.Size = UDim2.new(1, 0, 0, 26)
+				Hitbox.Position = UDim2.new(0, 0, 0, 23)
+				Hitbox.BackgroundTransparency = 1
+				Hitbox.Text = ""
+				Hitbox.AutoButtonColor = false
+				Hitbox.Parent = Card
+
 				local dragging = false
 				local function updateFromInput(input)
 					local absPos = BarBg.AbsolutePosition
@@ -747,17 +764,29 @@ function PastaSenseUI:CreateWindow(opts)
 					local t = math.clamp((input.Position.X - absPos.X) / math.max(absSize.X, 1), 0, 1)
 					apply(min + (max - min) * t)
 				end
-				BarBg.InputBegan:Connect(function(input)
-					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+				local function isPress(input)
+					return input.UserInputType == Enum.UserInputType.MouseButton1
+						or input.UserInputType == Enum.UserInputType.Touch
+				end
+				local function isMove(input)
+					return input.UserInputType == Enum.UserInputType.MouseMovement
+						or input.UserInputType == Enum.UserInputType.Touch
+				end
+				Hitbox.InputBegan:Connect(function(input)
+					if isPress(input) then
 						dragging = true
+						pcall(function() Scroll.ScrollingEnabled = false end)
 						updateFromInput(input)
 					end
 				end)
 				UserInputService.InputEnded:Connect(function(input)
-					if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+					if dragging and isPress(input) then
+						dragging = false
+						pcall(function() Scroll.ScrollingEnabled = true end)
+					end
 				end)
 				UserInputService.InputChanged:Connect(function(input)
-					if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+					if dragging and isMove(input) then
 						updateFromInput(input)
 					end
 				end)
