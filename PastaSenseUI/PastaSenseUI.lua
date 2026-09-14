@@ -11,7 +11,7 @@
 
 local PastaSenseUI = {}
 PastaSenseUI.__index = PastaSenseUI
-PastaSenseUI.Version = "1.0.1"
+PastaSenseUI.Version = "1.1.0"
 PastaSenseUI.Flags = {} -- flag -> { Value = any, Set = fn }
 
 -- // Services
@@ -98,16 +98,76 @@ local function normImage(icon)
 	return icon
 end
 
+-- // Кастомные иконки через workspace инжектора.
+-- Схема: скачали PNG по URL через game:HttpGet -> writefile("PastaSenseUI/icons/<key>.png")
+-- -> ImageLabel.Image = getcustomasset(path). Повторно не качаем, только если файла нет.
+-- Работает там где есть writefile/isfile/getcustomasset (Wave/Solara/Synapse и т.п.),
+-- иначе тихо возвращаем nil и рисуется текстовый глиф.
+local ICON_FOLDER = "PastaSenseUI/icons"
+
+local function ensureIconFolder()
+	pcall(function()
+		if typeof(makefolder) ~= "function" then return end
+		if typeof(isfolder) == "function" then
+			if not isfolder("PastaSenseUI") then makefolder("PastaSenseUI") end
+			if not isfolder(ICON_FOLDER) then makefolder(ICON_FOLDER) end
+		else
+			makefolder("PastaSenseUI")
+			makefolder(ICON_FOLDER)
+		end
+	end)
+end
+
+local function iconPathFor(key)
+	return ICON_FOLDER .. "/" .. (string.gsub(tostring(key), "[^%w_%-]", "_")) .. ".png"
+end
+
+local function fetchWorkspaceIcon(key, url)
+	if type(url) ~= "string" or string.sub(url, 1, 4) ~= "http" then return nil end
+	if typeof(getcustomasset) ~= "function" then return nil end
+	local path = iconPathFor(key)
+	local needDownload = true
+	pcall(function()
+		if typeof(isfile) == "function" and isfile(path) then
+			needDownload = false
+		end
+	end)
+	if needDownload then
+		if typeof(writefile) ~= "function" then return nil end
+		local ok, data = pcall(function() return game:HttpGet(url) end)
+		if not ok or type(data) ~= "string" or #data == 0 then return nil end
+		ensureIconFolder()
+		local wok = pcall(writefile, path, data)
+		if not wok then return nil end
+	end
+	local ok, asset = pcall(getcustomasset, path)
+	if ok and type(asset) == "string" and #asset > 0 then return asset end
+	return nil
+end
+
+-- Возвращает готовый Image-контент (asset id / custom asset) или nil.
+-- key нужен для имени файла в workspace.
+local function resolveIcon(icon, key)
+	if isImageIcon(icon) then
+		return normImage(icon)
+	end
+	if type(icon) == "string" and string.sub(icon, 1, 4) == "http" then
+		return fetchWorkspaceIcon(key or icon, icon)
+	end
+	return nil
+end
+
 -- Слот 30px под иконку слева в кнопке таба: картинка или текстовый глиф.
 -- Возвращает созданный объект (ImageLabel / TextLabel).
-local function TabIcon(parent, icon, tint)
-	if isImageIcon(icon) then
+local function TabIcon(parent, icon, tint, key)
+	local image = resolveIcon(icon, key)
+	if image then
 		local img = Instance.new("ImageLabel")
 		img.Size = UDim2.new(0, 18, 0, 18)
 		img.AnchorPoint = Vector2.new(0, 0.5)
 		img.Position = UDim2.new(0, 10, 0.5, 0)
 		img.BackgroundTransparency = 1
-		img.Image = normImage(icon)
+		img.Image = image
 		img.ImageColor3 = tint or Theme.Hint
 		img.ScaleType = Enum.ScaleType.Fit
 		img.Parent = parent
@@ -387,7 +447,7 @@ function PastaSenseUI:CreateWindow(opts)
 		Btn.Parent = TabList
 		Corner(Btn, 8)
 
-		local IconL = TabIcon(Btn, tabIcon, Theme.Hint)
+		local IconL = TabIcon(Btn, tabIcon, Theme.Hint, tabName)
 
 		local NameL = Label(Btn, tabName, 13, Theme.Hint, Enum.Font.GothamMedium)
 		NameL.Size = UDim2.new(1, -40, 1, 0)
@@ -893,7 +953,7 @@ function PastaSenseUI:CreateWindow(opts)
 				else
 					itemName = item
 				end
-				local hasImg = isImageIcon(itemIcon)
+				local hasImg = resolveIcon(itemIcon, itemName)
 				local B = Instance.new("TextButton")
 				B.Size = UDim2.new(0, hasImg and 140 or 110, 0, 28)
 				B.BackgroundColor3 = (i == 1) and Theme.Accent or Theme.Sidebar
@@ -908,7 +968,7 @@ function PastaSenseUI:CreateWindow(opts)
 					Img.AnchorPoint = Vector2.new(0, 0.5)
 					Img.Position = UDim2.new(0, 10, 0.5, 0)
 					Img.BackgroundTransparency = 1
-					Img.Image = normImage(itemIcon)
+					Img.Image = hasImg
 					Img.ScaleType = Enum.ScaleType.Fit
 					Img.Parent = B
 					rec.Img = Img
@@ -1027,6 +1087,23 @@ function PastaSenseUI:CreateWindow(opts)
 		Main.BackgroundColor3 = Theme.Background
 		Sidebar.BackgroundColor3 = Theme.Sidebar
 		SidebarFix.BackgroundColor3 = Theme.Sidebar
+	end
+
+	-- Предзагрузить иконки в workspace инжектора (папка PastaSenseUI/icons).
+	-- map: { rage = "https://.../rage.png", pistols = "https://.../pistol.png" }
+	-- Возвращает таблицу { key = assetPath }. Без writefile/getcustomasset вернёт пустую.
+	function PastaSenseUI:PreloadIcons(map)
+		local out = {}
+		if type(map) ~= "table" then return out end
+		for key, url in pairs(map) do
+			local asset = fetchWorkspaceIcon(key, url)
+			if asset then out[key] = asset end
+		end
+		return out
+	end
+
+	function PastaSenseUI:GetIcon(key, url)
+		return fetchWorkspaceIcon(key, url)
 	end
 
 	function Window:Destroy()

@@ -2,7 +2,7 @@
 -- Запуск в инжекторе одной строкой:
 --   loadstring(game:HttpGet("https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/demo.lua"))()
 
-local LIB_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/PastaSenseUI.lua?v=1.0.1"
+local LIB_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/PastaSenseUI.lua?v=1.1.0"
 
 local function fetch(url)
 	local ok, res = pcall(function() return game:HttpGet(url) end)
@@ -36,16 +36,20 @@ local Win = Lib:CreateWindow({
 })
 
 -- ================= RAGE (главный скрин) =================
--- Иконки: SVG напрямую нельзя — скачай PNG с icons8, залей как Decal в Roblox
--- и подставь ID: Icon = "rbxassetid://123456789" (или просто числом).
+-- Иконки: можно PNG-URL (скачается в workspace инжектора: PastaSenseUI/icons/),
+-- rbxassetid или текстовый глиф. SVG напрямую нельзя — только PNG.
+-- 1) Предзагрузка (файлы появятся в workspace после первого запуска):
+-- Lib:PreloadIcons({ rage = "https://.../rage.png", pistols = "https://.../pistol.png" })
+-- 2) Использование:
+-- local Rage = Win:AddTab({ Name = "rage", Icon = "https://.../rage.png" })
 local Rage = Win:AddTab({ Name = "rage", Icon = "+" })
 -- пример с картинками:
 -- local Rage = Win:AddTab({ Name = "rage", Icon = "rbxassetid://123456789" })
 
 Rage:AddWeaponBar(
 	{ "pistols", "rifles", "smgs", "heavies", "shotguns", "scout", "awp", "autos" },
-	-- пример с картинками стволов:
-	-- { {Name="pistols", Icon="rbxassetid://111"}, {Name="rifles", Icon="rbxassetid://222"} },
+	-- пример с картинками из workspace (URL скачается сам при первом запуске):
+	-- { {Name="pistols", Icon="https://.../pistol.png"}, {Name="rifles", Icon="https://.../rifle.png"} },
 	function(current)
 		print("[weapon]", current)
 	end
