@@ -11,7 +11,7 @@
 
 local PastaSenseUI = {}
 PastaSenseUI.__index = PastaSenseUI
-PastaSenseUI.Version = "1.4.1"
+PastaSenseUI.Version = "1.5.0"
 PastaSenseUI.Flags = {} -- flag -> { Value = any, Set = fn }
 
 -- // Services
@@ -20,6 +20,7 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local HttpService = game:GetService("HttpService")
 local CoreGui = game:GetService("CoreGui")
+local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 
 -- // Theme (customizable via Lib.Theme + Lib:SetTheme)
@@ -36,6 +37,9 @@ PastaSenseUI.Theme = {
 	Section     = Color3.fromRGB(120, 120, 120),
 	Stroke      = Color3.fromRGB(55, 55, 55),
 	Green       = Color3.fromRGB(180, 255, 120),
+	Font        = Enum.Font.Montserrat,
+	FontMedium  = Enum.Font.Montserrat,
+	FontBold    = Enum.Font.MontserratBold,
 }
 
 local Theme = PastaSenseUI.Theme
@@ -71,7 +75,7 @@ local function Label(parent, text, size, color, font, align)
 	local l = Instance.new("TextLabel")
 	l.BackgroundTransparency = 1
 	l.Text = text
-	l.Font = font or Enum.Font.GothamMedium
+	l.Font = font or Theme.FontMedium
 	l.TextSize = size or 13
 	l.TextColor3 = color or Theme.Text
 	l.TextXAlignment = align or Enum.TextXAlignment.Left
@@ -252,7 +256,7 @@ local function TabIcon(parent, icon, tint, key)
 		img.Parent = parent
 		return img
 	end
-	local l = Label(parent, tostring(icon), 14, tint or Theme.Hint, Enum.Font.GothamBold, Enum.TextXAlignment.Center)
+	local l = Label(parent, tostring(icon), 14, tint or Theme.Hint, Theme.FontBold, Enum.TextXAlignment.Center)
 	l.Size = UDim2.new(0, 30, 1, 0)
 	l.Position = UDim2.new(0, 4, 0, 0)
 	return l
@@ -326,6 +330,15 @@ function PastaSenseUI:CreateWindow(opts)
 	ScreenGui.IgnoreGuiInset = false
 	protectGui(ScreenGui)
 
+	-- Лёгкий блюр фона (само меню остаётся чётким)
+	local Blur = nil
+	pcall(function()
+		Blur = Instance.new("BlurEffect")
+		Blur.Name = "PastaBlur"
+		Blur.Size = 14
+		Blur.Parent = Lighting
+	end)
+
 	-- Main
 	local Main = Instance.new("Frame")
 	Main.Name = "Main"
@@ -337,6 +350,67 @@ function PastaSenseUI:CreateWindow(opts)
 	Main.Parent = ScreenGui
 	Corner(Main, 12)
 	Stroke(Main, Theme.Stroke, 1)
+
+	-- Подсветка краёв + мягкая тень под окном
+	local EdgeGlow = Stroke(Main, Color3.fromRGB(110, 110, 110), 1)
+	EdgeGlow.Transparency = 0.55
+	local Shadow = Instance.new("Frame")
+	Shadow.Name = "Shadow"
+	Shadow.Size = UDim2.new(1, 18, 1, 18)
+	Shadow.Position = UDim2.new(0, -9, 0, -5)
+	Shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	Shadow.BackgroundTransparency = 0.6
+	Shadow.BorderSizePixel = 0
+	Shadow.ZIndex = 0
+	Shadow.Parent = Main
+	Corner(Shadow, 15)
+
+	-- Снежинки поверх меню (мелкие белые точки, не кликабельны)
+	local Snow = Instance.new("Frame")
+	Snow.Name = "Snow"
+	Snow.Size = UDim2.new(1, 0, 1, 0)
+	Snow.BackgroundTransparency = 1
+	Snow.ClipsDescendants = true
+	Snow.ZIndex = 50
+	Snow.Parent = Main
+	Corner(Snow, 12)
+	task.spawn(function()
+		local flakes = {}
+		for i = 1, 45 do
+			local fl = Instance.new("Frame")
+			local sz = math.random(2, 5)
+			fl.Size = UDim2.new(0, sz, 0, sz)
+			fl.AnchorPoint = Vector2.new(0.5, 0.5)
+			fl.Position = UDim2.new(math.random(), 0, math.random(), 0)
+			fl.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			fl.BackgroundTransparency = 0.25 + math.random() * 0.5
+			fl.BorderSizePixel = 0
+			fl.Parent = Snow
+			Corner(fl, 5)
+			flakes[i] = {
+				o = fl,
+				x = fl.Position.X.Scale,
+				sp = 0.0012 + math.random() * 0.0028,
+				ph = math.random() * 6.28,
+				sw = 0.004 + math.random() * 0.01,
+			}
+		end
+		local t = 0
+		while Snow.Parent do
+			if Main.Visible and Main.Parent then
+				t = t + 0.03
+				for _, fl in ipairs(flakes) do
+					local ny = fl.o.Position.Y.Scale + fl.sp
+					if ny > 1.02 then
+						ny = -0.02
+						fl.x = math.random()
+					end
+					fl.o.Position = UDim2.new(fl.x + math.sin(t * 2 + fl.ph) * fl.sw, 0, ny, 0)
+				end
+			end
+			task.wait(0.03)
+		end
+	end)
 
 	-- Sidebar
 	local Sidebar = Instance.new("Frame")
@@ -366,13 +440,13 @@ function PastaSenseUI:CreateWindow(opts)
 	Dollar.Size = UDim2.new(0, 22, 0, 22)
 	Dollar.Position = UDim2.new(0, 14, 0, 14)
 	Dollar.BackgroundTransparency = 1
-	Dollar.Font = Enum.Font.GothamBold
+	Dollar.Font = Theme.FontBold
 	Dollar.TextSize = 16
 	Dollar.TextColor3 = Theme.Text
 	Dollar.Text = "$"
 	Dollar.Parent = Sidebar
 
-	local UserLabel = Label(Sidebar, userName, 13, Theme.Text, Enum.Font.GothamMedium)
+	local UserLabel = Label(Sidebar, userName, 13, Theme.Text, Theme.FontMedium)
 	UserLabel.Position = UDim2.new(0, 42, 0, 14)
 	UserLabel.Size = UDim2.new(1, -56, 0, 22)
 
@@ -381,7 +455,7 @@ function PastaSenseUI:CreateWindow(opts)
 	PanelBtn.Position = UDim2.new(0, 198, 0, 12)
 	PanelBtn.BackgroundColor3 = Theme.Card
 	PanelBtn.Text = "[]"
-	PanelBtn.Font = Enum.Font.GothamBold
+	PanelBtn.Font = Theme.FontBold
 	PanelBtn.TextSize = 12
 	PanelBtn.TextColor3 = Theme.Hint
 	PanelBtn.AutoButtonColor = false
@@ -409,7 +483,7 @@ function PastaSenseUI:CreateWindow(opts)
 	Topbar.BackgroundTransparency = 1
 	Topbar.Parent = Main
 
-	local CurrentTabLabel = Label(Topbar, "rage", 13, Theme.Hint, Enum.Font.GothamMedium)
+	local CurrentTabLabel = Label(Topbar, "rage", 13, Theme.Hint, Theme.FontMedium)
 	CurrentTabLabel.Position = UDim2.new(0, 52, 0, 14)
 	CurrentTabLabel.Size = UDim2.new(0, 200, 0, 22)
 
@@ -420,7 +494,7 @@ function PastaSenseUI:CreateWindow(opts)
 	SearchBox.BackgroundColor3 = Theme.Card
 	SearchBox.Text = ""
 	SearchBox.PlaceholderText = "Search"
-	SearchBox.Font = Enum.Font.Gotham
+	SearchBox.Font = Theme.Font
 	SearchBox.TextSize = 13
 	SearchBox.TextColor3 = Theme.Text
 	SearchBox.PlaceholderColor3 = Theme.Hint
@@ -472,6 +546,7 @@ function PastaSenseUI:CreateWindow(opts)
 		if gpe then return end
 		if input.KeyCode == toggleKey then
 			Main.Visible = not Main.Visible
+			pcall(function() Blur.Enabled = Main.Visible end)
 		end
 	end)
 	-- Кнопка [] сворачивает/разворачивает сайдбар, контент расширяется
@@ -538,10 +613,15 @@ function PastaSenseUI:CreateWindow(opts)
 		Btn.Text = ""
 		Btn.Parent = TabList
 		Corner(Btn, 8)
+		local BtnStroke = Instance.new("UIStroke")
+		BtnStroke.Color = Color3.fromRGB(255, 255, 255)
+		BtnStroke.Transparency = 1
+		BtnStroke.Thickness = 1
+		BtnStroke.Parent = Btn
 
 		local IconL = TabIcon(Btn, tabIcon, Theme.Hint, tabName)
 
-		local NameL = Label(Btn, tabName, 13, Theme.Hint, Enum.Font.GothamMedium)
+		local NameL = Label(Btn, tabName, 13, Theme.Hint, Theme.FontMedium)
 		NameL.Size = UDim2.new(1, -40, 1, 0)
 		NameL.Position = UDim2.new(0, 36, 0, 0)
 
@@ -590,6 +670,7 @@ function PastaSenseUI:CreateWindow(opts)
 		Tab._button = Btn
 		Tab._icon = IconL
 		Tab._name = NameL
+		Tab._stroke = BtnStroke
 		Tab._elements = {}
 		Tab._weaponButtons = {}
 		Tab._weaponCallback = nil
@@ -618,7 +699,7 @@ function PastaSenseUI:CreateWindow(opts)
 
 			function Col:Section(title)
 				self._order = self._order + 1
-				local T = Label(Scroll, string.upper(title or "SECTION"), 11, Theme.Section, Enum.Font.GothamBold)
+				local T = Label(Scroll, string.upper(title or "SECTION"), 11, Theme.Section, Theme.FontBold)
 				T.Size = UDim2.new(1, 0, 0, 18)
 				T.LayoutOrder = self._order
 				table.insert(self._tab._elements, { Name = title, Frame = T, SectionTitle = T })
@@ -647,7 +728,7 @@ function PastaSenseUI:CreateWindow(opts)
 				Padding(Card, 14, 14, 0, 0)
 				trackCard(name, Card)
 
-				Label(Card, name, 13, Theme.Text, Enum.Font.GothamMedium).Size = UDim2.new(1, -70, 1, 0)
+				Label(Card, name, 13, Theme.Text, Theme.FontMedium).Size = UDim2.new(1, -70, 1, 0)
 
 				local Pill = Instance.new("TextButton")
 				Pill.Size = UDim2.new(0, 44, 0, 24)
@@ -708,9 +789,9 @@ function PastaSenseUI:CreateWindow(opts)
 				Top.Size = UDim2.new(1, 0, 0, 20)
 				Top.BackgroundTransparency = 1
 				Top.Parent = Card
-				local NL = Label(Top, name, 13, Theme.Text, Enum.Font.GothamMedium)
+				local NL = Label(Top, name, 13, Theme.Text, Theme.FontMedium)
 				NL.Size = UDim2.new(1, -60, 1, 0)
-				local VL = Label(Top, tostring(def) .. suffix, 12, Theme.Hint, Enum.Font.Gotham, Enum.TextXAlignment.Right)
+				local VL = Label(Top, tostring(def) .. suffix, 12, Theme.Hint, Theme.Font, Enum.TextXAlignment.Right)
 				VL.Size = UDim2.new(0, 60, 1, 0)
 				VL.Position = UDim2.new(1, -60, 0, 0)
 
@@ -824,7 +905,7 @@ function PastaSenseUI:CreateWindow(opts)
 				trackCard(name, Card)
 				Card.ClipsDescendants = false
 
-				Label(Card, name, 13, Theme.Text, Enum.Font.GothamMedium).Size = UDim2.new(0.45, 0, 1, 0)
+				Label(Card, name, 13, Theme.Text, Theme.FontMedium).Size = UDim2.new(0.45, 0, 1, 0)
 
 				local Box = Instance.new("TextButton")
 				Box.Size = UDim2.new(0.55, -4, 0, 28)
@@ -832,7 +913,7 @@ function PastaSenseUI:CreateWindow(opts)
 				Box.Position = UDim2.new(1, 0, 0.5, 0)
 				Box.BackgroundColor3 = Theme.Input
 				Box.Text = tostring(def) .. "   v"
-				Box.Font = Enum.Font.Gotham
+				Box.Font = Theme.Font
 				Box.TextSize = 12
 				Box.TextColor3 = Theme.Hint
 				Box.AutoButtonColor = false
@@ -869,7 +950,7 @@ function PastaSenseUI:CreateWindow(opts)
 					B.Size = UDim2.new(1, 0, 0, 26)
 					B.BackgroundColor3 = Theme.Input
 					B.Text = tostring(item)
-					B.Font = Enum.Font.Gotham
+					B.Font = Theme.Font
 					B.TextSize = 12
 					B.TextColor3 = Theme.Text
 					B.AutoButtonColor = false
@@ -896,7 +977,7 @@ function PastaSenseUI:CreateWindow(opts)
 				Card.Size = UDim2.new(1, 0, 0, 38)
 				Card.BackgroundColor3 = Theme.Card
 				Card.Text = name
-				Card.Font = Enum.Font.GothamMedium
+				Card.Font = Theme.FontMedium
 				Card.TextSize = 13
 				Card.TextColor3 = Theme.Text
 				Card.AutoButtonColor = false
@@ -923,14 +1004,14 @@ function PastaSenseUI:CreateWindow(opts)
 				Padding(Card, 14, 10, 0, 0)
 				trackCard(name, Card)
 
-				Label(Card, name, 13, Theme.Text, Enum.Font.GothamMedium).Size = UDim2.new(0.55, 0, 1, 0)
+				Label(Card, name, 13, Theme.Text, Theme.FontMedium).Size = UDim2.new(0.55, 0, 1, 0)
 				local KeyBtn = Instance.new("TextButton")
 				KeyBtn.Size = UDim2.new(0, 70, 0, 26)
 				KeyBtn.AnchorPoint = Vector2.new(1, 0.5)
 				KeyBtn.Position = UDim2.new(1, 0, 0.5, 0)
 				KeyBtn.BackgroundColor3 = Theme.Input
 				KeyBtn.Text = def.Name
-				KeyBtn.Font = Enum.Font.Gotham
+				KeyBtn.Font = Theme.Font
 				KeyBtn.TextSize = 12
 				KeyBtn.TextColor3 = Theme.Text
 				KeyBtn.AutoButtonColor = false
@@ -974,7 +1055,7 @@ function PastaSenseUI:CreateWindow(opts)
 				Padding(Card, 14, 10, 0, 0)
 				trackCard(name, Card)
 
-				Label(Card, name, 13, Theme.Text, Enum.Font.GothamMedium).Size = UDim2.new(1, -50, 1, 0)
+				Label(Card, name, 13, Theme.Text, Theme.FontMedium).Size = UDim2.new(1, -50, 1, 0)
 				local Prev = Instance.new("TextButton")
 				Prev.Size = UDim2.new(0, 28, 0, 28)
 				Prev.AnchorPoint = Vector2.new(1, 0)
@@ -1085,7 +1166,7 @@ function PastaSenseUI:CreateWindow(opts)
 				PresetLayout.FillDirection = Enum.FillDirection.Horizontal
 				PresetLayout.Padding = UDim.new(0, 6)
 				PresetLayout.Parent = PresetRow
-				local RGBLabel = Label(Picker, "", 11, Theme.Hint, Enum.Font.Gotham)
+				local RGBLabel = Label(Picker, "", 11, Theme.Hint, Theme.Font)
 				RGBLabel.Size = UDim2.new(1, 0, 0, 14)
 				RGBLabel.Position = UDim2.new(0, 0, 0, 188)
 
@@ -1205,7 +1286,7 @@ function PastaSenseUI:CreateWindow(opts)
 				Box.BackgroundColor3 = Theme.Input
 				Box.Text = def
 				Box.PlaceholderText = ph
-				Box.Font = Enum.Font.Gotham
+				Box.Font = Theme.Font
 				Box.TextSize = 12
 				Box.TextColor3 = Theme.Text
 				Box.PlaceholderColor3 = Theme.Hint
@@ -1272,13 +1353,13 @@ function PastaSenseUI:CreateWindow(opts)
 					Img.ScaleType = Enum.ScaleType.Fit
 					Img.Parent = B
 					rec.Img = Img
-					local T = Label(B, tostring(itemName), 12, Theme.Hint, Enum.Font.GothamMedium)
+					local T = Label(B, tostring(itemName), 12, Theme.Hint, Theme.FontMedium)
 					T.Size = UDim2.new(1, -38, 1, 0)
 					T.Position = UDim2.new(0, 34, 0, 0)
 					rec.Txt = T
 				else
 					B.Text = tostring(itemName)
-					B.Font = Enum.Font.GothamMedium
+					B.Font = Theme.FontMedium
 					B.TextSize = 12
 					B.TextColor3 = Theme.Hint
 				end
@@ -1306,15 +1387,32 @@ function PastaSenseUI:CreateWindow(opts)
 				t._button.BackgroundColor3 = Theme.Sidebar
 				paintTabIcon(t._icon, Theme.Hint)
 				if t._name then t._name.TextColor3 = Theme.Hint end
+				if t._stroke then t._stroke.Transparency = 1 end
 			end
 			Page.Visible = true
 			Btn.BackgroundColor3 = Theme.Card
 			paintTabIcon(IconL, Theme.Text)
 			NameL.TextColor3 = Theme.Text
+			BtnStroke.Transparency = 0.6
 			Window._activeTab = Tab
 			CurrentTabLabel.Text = tabName
 			SearchBox.Text = ""
+			-- Анимация переключения: контент заезжает слева
+			local targetY = WeaponBarHolder.Visible and 46 or 0
+			Columns.Position = UDim2.new(0, 14, 0, targetY)
+			tween(Columns, { Position = UDim2.new(0, 0, 0, targetY) }, 0.22)
 		end
+		-- Hover-подсветка кнопок сайдбара
+		Btn.MouseEnter:Connect(function()
+			if Window._activeTab ~= Tab then
+				tween(Btn, { BackgroundColor3 = Theme.CardHover }, 0.12)
+			end
+		end)
+		Btn.MouseLeave:Connect(function()
+			if Window._activeTab ~= Tab then
+				tween(Btn, { BackgroundColor3 = Theme.Sidebar }, 0.12)
+			end
+		end)
 		Btn.MouseButton1Click:Connect(select)
 
 		table.insert(Window._tabs, Tab)
@@ -1416,6 +1514,7 @@ function PastaSenseUI:CreateWindow(opts)
 	PastaSenseUI.Base64Decode = base64Decode
 
 	function Window:Destroy()
+		pcall(function() if Blur then Blur:Destroy() end end)
 		pcall(function() ScreenGui:Destroy() end)
 	end
 
