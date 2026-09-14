@@ -2,7 +2,7 @@
 -- Запуск в инжекторе одной строкой:
 --   loadstring(game:HttpGet("https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/demo.lua"))()
 
-local LIB_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/PastaSenseUI.lua?v=1.3.0"
+local LIB_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/PastaSenseUI.lua?v=1.3.1"
 
 local function fetch(url)
 	local ok, res = pcall(function() return game:HttpGet(url) end)
@@ -49,14 +49,7 @@ local Rage = Win:AddTab({ Name = "rage" })
 -- пример с картинками:
 -- local Rage = Win:AddTab({ Name = "rage", Icon = "rbxassetid://123456789" })
 
-Rage:AddWeaponBar(
-	{ "pistols", "rifles", "smgs", "heavies", "shotguns", "scout", "awp", "autos" },
-	-- пример с картинками из workspace (URL скачается сам при первом запуске):
-	-- { {Name="pistols", Icon="https://.../pistol.png"}, {Name="rifles", Icon="https://.../rifle.png"} },
-	function(current)
-		print("[weapon]", current)
-	end
-)
+-- weapon-bar убран. вернуть: Rage:AddWeaponBar({ "pistols", ... }, function(c) print(c) end)
 
 local Left, Right = Rage:Columns()
 

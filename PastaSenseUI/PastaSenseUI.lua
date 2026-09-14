@@ -11,7 +11,7 @@
 
 local PastaSenseUI = {}
 PastaSenseUI.__index = PastaSenseUI
-PastaSenseUI.Version = "1.3.0"
+PastaSenseUI.Version = "1.3.1"
 PastaSenseUI.Flags = {} -- flag -> { Value = any, Set = fn }
 
 -- // Services
@@ -562,8 +562,8 @@ function PastaSenseUI:CreateWindow(opts)
 		Padding(WeaponScroll, 6, 6, 4, 4)
 
 		local Columns = Instance.new("Frame")
-		Columns.Size = UDim2.new(1, 0, 1, -46)
-		Columns.Position = UDim2.new(0, 0, 0, 46)
+		Columns.Size = UDim2.new(1, 0, 1, 0)
+		Columns.Position = UDim2.new(0, 0, 0, 0)
 		Columns.BackgroundTransparency = 1
 		Columns.Parent = Page
 		local ColLayout = Instance.new("UIListLayout")
@@ -1016,6 +1016,7 @@ function PastaSenseUI:CreateWindow(opts)
 		function Tab:AddWeaponBar(items, callback)
 			WeaponBarHolder.Visible = true
 			Columns.Size = UDim2.new(1, 0, 1, -46)
+			Columns.Position = UDim2.new(0, 0, 0, 46)
 			self._weaponCallback = callback
 			local function paintWeapon(rec, active)
 				rec.Btn.BackgroundColor3 = active and Theme.Accent or Theme.Sidebar
