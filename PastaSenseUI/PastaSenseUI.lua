@@ -11,7 +11,7 @@
 
 local PastaSenseUI = {}
 PastaSenseUI.__index = PastaSenseUI
-PastaSenseUI.Version = "1.5.0"
+PastaSenseUI.Version = "1.5.1"
 PastaSenseUI.Flags = {} -- flag -> { Value = any, Set = fn }
 
 -- // Services
@@ -96,6 +96,7 @@ config = [==[base64:iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsT
 inventory = [==[base64:iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAjUlEQVR4nO3TsRHCMBAF0Y0cQVU29F+CqeSTEBJhM/rW7Dage6M7MPtfuXgIKQshZSGkLISUhZCymA5ireViIWRiyJ5kTbIcWOclyZbkNRKy/gr48vZjJOR2IuQ+ErLN8iP7Z4CjN/IcfSNDQ0hZCCkLIWUhpCyElIWQshBSFkLKQkhZCCkLIVeBGON7Axzn4IWh6ouvAAAAAElFTkSuQmCC]==],
 movement = [==[base64:iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAACo0lEQVR4nO2ZTYhOURiAXxllSPlZKWZKNtJIZocURb5iZ2FlVhZqFkpJKX8JC6KUxWQjG0QslDJfmeSn/CzEQj4JYwgjMoPx++j4zpfbde49Z77ce8+Z7lPTNHXO6X2+8/O+7zciJSVjD2ASsAd4DHzVv3cDrRKYxE3M3AhGRu9EGrskBPQxSqMmIaDvRBojMkZ25JGEgH6d0thZVGAbgZfAIHBJXVagAkxLGN+qXycT13N/tYDpwLmUT/YX8BA4AWwCOmIySrim70xN7UQREsuBfkZPb1SoMIAJwH7gJ83zHTis1ipKYi5wKyG4a8A6oAd47Sh0sAiJlcBHQzA/9FlviYwdDywDLlpE3hYh8sQQyFNgacoRvG8RGSxCpD8WxClgasr4rdg5lq+F/AmsomXUT5dlbBswbJFQT267Hj9RfAS44LobwHxgn/iG3jkbI8BsPf6suvT4tCu6YTI9CnGO6vEdkXzUJb4AHHCQ+ALMMhzBu+IDwDyHPkNxZBTlfAP1wFTyEjmNnc/AzMicbtx5npeIurA2DsXmTNalv1ci7yyBqJK+zTBvDTBgkwBW5yVyxuFT7UtqtgoH6IxUxi7H5EEjh3gDsBD4BCzSf88BrjjIvAAWiA9QL9Vv68BeRXZmHLABeGOR+QCsKNpDgM2xwL4Bexs9t+7neyydpMo7a7MKsB2oOiY3DDKdsfUWA/dS5jzLSqRK82xPWLMF2AIMGea8z0pkqEmJq+reWNZeb5jXl5VIbxMSA6ZkZ1h7R1rtlcUduex4R1TeOOmaF4DzhjX8Kd9d0aVGHD/yiSvAjIROsZgv6ZoFWGUQuSOhAWwziByX0MDceHVLaFD/t0GcJRIa1NvcKKoGmyKhwb+Jtiohwt9EO6zrOWslUFJSIv+F304HE3CzjTjQAAAAAElFTkSuQmCC]==],
 scripts = [==[base64:iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAABrUlEQVR4nO2YO0sDQRCAxweCVhZC6nQ+2vhIIJIindba2aSPtfa+Oi0F7bVNfoD2KQO2YmHQQm0UVMRPDqYIwSMXk12zw31V4HZm7rvdzO2eSEqKG4AJ4AhoER73wGHkIPojdA4k0JnopBWJmEAwgmAESRk2MIJgBMEIghHEc70voAjkQxepa4PJhi6ypiL7IYvcAWN6bHgIWWRHZ2PTRXLBDx9ARkWuh02kBswCqwnGXqjEHPD9y/Wi5qr5FGkC5bYtzkqCmJKOPYm5vtSWr6w1nIk8AdvAuBac1mPye5e4G2AEmASeY8Z8AqfAjOYeBbZ6aQpJROKKPCasUdW4isOHRRKRQh/T/hbdjMY2+li+hf8WOdO4HL3RdCHSz/rNacx5svvH6dL6a5FG27hXx/9DBtF+l2PGVfR6NUHORZ/tt5Po5TWvL7NOXoApbbtR++1GUXPVGLItyrE+3RKeEEd5F1TkkoBFrlQio5vFYEU2VGQXj8iA8z3owSlqn7cELLKns7GOZ2TA+bIqUidwkbwetKLPPl4RjCAYQTCCYATBCIIRBCMIRpCUFHHCD2G4tzYjCqlAAAAAAElFTkSuQmCC]==],
+panel = [==[base64:iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAAA10lEQVR4nO3XSw6DMAyE4TkIPQa0F4ceoY9LTVWJhZWFhdWEOOp8EqtGpv8ChAEZEMk3+3rWCukOCjGYAGpgAlCI4cxfSU77tY0cMpkzl+K3OXiPa9aQJXiPW8+QbQ/4Xnc2hMYhp4FCDGf+fPRhTR0C/9w4by3454Z6ay1H/8iv0DjkNFCIwQRQAxOAQgwmgBr4ByGrFquCFqsIZ74WqygoxHDma7EqabGKcOZrsYqCQgxnvr61SvrWinDm61srCgoxmABqYAJQiMEEUAPJV+eOR5UQwXk+D10sXOTAx4wAAAAASUVORK5CYII=]==],
 }
 local function isImageIcon(icon)
 	if type(icon) == "number" then return true end
@@ -450,17 +451,37 @@ function PastaSenseUI:CreateWindow(opts)
 	UserLabel.Position = UDim2.new(0, 42, 0, 14)
 	UserLabel.Size = UDim2.new(1, -56, 0, 22)
 
-	local PanelBtn = Instance.new("TextButton")
-	PanelBtn.Size = UDim2.new(0, 26, 0, 26)
-	PanelBtn.Position = UDim2.new(0, 198, 0, 12)
-	PanelBtn.BackgroundColor3 = Theme.Card
-	PanelBtn.Text = "[]"
-	PanelBtn.Font = Theme.FontBold
-	PanelBtn.TextSize = 12
-	PanelBtn.TextColor3 = Theme.Hint
-	PanelBtn.AutoButtonColor = false
-	PanelBtn.Parent = Main
-	Corner(PanelBtn, 6)
+	local PanelBtn
+	do
+		local panelImg = resolveIcon(DEFAULT_ICONS.panel, "panel")
+		if panelImg then
+			local IB = Instance.new("ImageButton")
+			IB.Size = UDim2.new(0, 26, 0, 26)
+			IB.Position = UDim2.new(0, 198, 0, 12)
+			IB.BackgroundColor3 = Theme.Card
+			IB.Image = panelImg
+			IB.ImageColor3 = Theme.Hint
+			IB.ScaleType = Enum.ScaleType.Fit
+			IB.AutoButtonColor = false
+			IB.Parent = Main
+			Corner(IB, 6)
+			Padding(IB, 5, 5, 5, 5)
+			PanelBtn = IB
+		else
+			local TB = Instance.new("TextButton")
+			TB.Size = UDim2.new(0, 26, 0, 26)
+			TB.Position = UDim2.new(0, 198, 0, 12)
+			TB.BackgroundColor3 = Theme.Card
+			TB.Text = "[]"
+			TB.Font = Theme.FontBold
+			TB.TextSize = 12
+			TB.TextColor3 = Theme.Hint
+			TB.AutoButtonColor = false
+			TB.Parent = Main
+			Corner(TB, 6)
+			PanelBtn = TB
+		end
+	end
 
 	-- Tab list
 	local TabList = Instance.new("ScrollingFrame")
