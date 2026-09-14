@@ -107,18 +107,11 @@ function UI.Build(deps, library)
             callback = function(v) S.Aim_Smoothing = v end,
         })
         tuning:slider({
-            name = "FOV (Hold)",
+            name = "FOV",
             min = 10, max = 800, interval = 1,
             default = S.Aim_FOV_Hold,
             seperator = true,
-            callback = function(v) S.Aim_FOV_Hold = v end,
-        })
-        tuning:slider({
-            name = "FOV (Toggle)",
-            min = 10, max = 800, interval = 1,
-            default = S.Aim_FOV_Toggle,
-            seperator = true,
-            callback = function(v) S.Aim_FOV_Toggle = v end,
+            callback = function(v) S.Aim_FOV_Hold = v; S.Aim_FOV_Toggle = v end,
         })
         tuning:slider({
             name = "Max Distance",
