@@ -311,7 +311,7 @@ function library:addTab(name)
                 button.TextStrokeTransparency = 0.000
                 button.TextXAlignment = Enum.TextXAlignment.Right
     
-                function updateValue(val)
+                local function updateValue(val)
                     if library.colorpicking then return end
                     library.flags[args.flag] = val
                     button.Text = keyNames[val] or val.Name
@@ -1586,7 +1586,7 @@ function library:addTab(name)
             button.TextStrokeTransparency = 0.000
             button.TextXAlignment = Enum.TextXAlignment.Right
 
-            function updateValue(val)
+            local function updateValue(val)
                 if library.colorpicking then return end
                 library.flags[args.flag] = val
                 button.Text = keyNames[val] or val.Name
