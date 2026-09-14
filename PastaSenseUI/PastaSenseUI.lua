@@ -863,7 +863,6 @@ function PastaSenseUI:CreateWindow(opts)
 			for _, t in ipairs(Window._tabs) do
 				t._page.Visible = false
 				t._button.BackgroundColor3 = Theme.Sidebar
-				;(t._button:FindFirstChildOfClass("TextLabel"))
 				for _, ch in ipairs(t._button:GetChildren()) do
 					if ch:IsA("TextLabel") then ch.TextColor3 = Theme.Hint end
 				end
