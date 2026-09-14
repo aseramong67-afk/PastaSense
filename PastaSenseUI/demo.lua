@@ -2,7 +2,7 @@
 -- Запуск в инжекторе одной строкой:
 --   loadstring(game:HttpGet("https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/demo.lua"))()
 
-local LIB_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/PastaSenseUI.lua?v=1.2.0"
+local LIB_URL = "https://raw.githubusercontent.com/aseramong67-afk/PastaSense/main/PastaSenseUI/PastaSenseUI.lua?v=1.3.0"
 
 local function fetch(url)
 	local ok, res = pcall(function() return game:HttpGet(url) end)
@@ -45,7 +45,7 @@ local Win = Lib:CreateWindow({
 --    или Icon = { Base64 = "iVBORw0KGgo..." }
 -- 3) Decal из Roblox: Icon = "rbxassetid://123456789"
 -- Предзагрузка: Lib:PreloadIcons({ rage = "https://.../rage.png" })
-local Rage = Win:AddTab({ Name = "rage", Icon = "+" })
+local Rage = Win:AddTab({ Name = "rage" })
 -- пример с картинками:
 -- local Rage = Win:AddTab({ Name = "rage", Icon = "rbxassetid://123456789" })
 
@@ -91,7 +91,7 @@ Right:Toggle({ Name = "quick peek", Default = false, Flag = "peek_quick" })
 Right:Toggle({ Name = "duck peek", Default = false, Flag = "peek_duck" })
 
 -- ================= ОСТАЛЬНЫЕ ТАБЫ =================
-local Legit = Win:AddTab({ Name = "legit", Icon = "o" })
+local Legit = Win:AddTab({ Name = "legit" })
 do
 	local L, R = Legit:Columns()
 	L:Section("AIMBOT")
@@ -103,7 +103,7 @@ do
 	R:Keybind({ Name = "trigger key", Default = Enum.KeyCode.T, Flag = "legit_triggerkey", Callback = function(k) print("trigger key", k) end })
 end
 
-local Visuals = Win:AddTab({ Name = "visuals", Icon = "[]" })
+local Visuals = Win:AddTab({ Name = "visuals" })
 do
 	local L, R = Visuals:Columns()
 	L:Section("ESP")
@@ -115,7 +115,7 @@ do
 	R:Slider({ Name = "fov changer", Min = 70, Max = 120, Default = 90, Flag = "vis_fov" })
 end
 
-local Misc = Win:AddTab({ Name = "miscellaneous", Icon = "*" })
+local Misc = Win:AddTab({ Name = "miscellaneous" })
 do
 	local L, R = Misc:Columns()
 	L:Section("MOVEMENT")
@@ -126,7 +126,7 @@ do
 	R:Button({ Name = "unload UI", Callback = function() Win:Destroy() end })
 end
 
-local ConfigTab = Win:AddTab({ Name = "config", Icon = "=" })
+local ConfigTab = Win:AddTab({ Name = "config" })
 do
 	local L, R = ConfigTab:Columns()
 	L:Section("CONFIGS")
@@ -145,9 +145,9 @@ do
 	end })
 end
 
-Win:AddTab({ Name = "inventory", Icon = "=" })
-Win:AddTab({ Name = "movement", Icon = ">>" })
-Win:AddTab({ Name = "scripts", Icon = "</>" })
+Win:AddTab({ Name = "inventory" })
+Win:AddTab({ Name = "movement" })
+Win:AddTab({ Name = "scripts" })
 
 -- пример кастомизации темы:
 -- Lib:SetTheme({ Accent = Color3.fromRGB(180, 255, 120) })
