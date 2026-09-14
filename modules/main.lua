@@ -27,15 +27,20 @@ function Main.New(deps)
     local triggerLast = 0
     local triggerHeld, triggerPressT = false, 0
 
-    local WatermarkText = Drawing.new("Text")
-    WatermarkText.Size = 13
-    WatermarkText.Center = false
-    WatermarkText.Outline = true
-    WatermarkText.Color = Color3.fromRGB(255, 255, 255)
-    WatermarkText.Transparency = 1
-    WatermarkText.Visible = false
-    WatermarkText.Font = Drawing.Fonts.Monospace
     local wmFrames, wmLast, wmFps = 0, tick(), 0
+
+    local wmOk, WatermarkText = pcall(function()
+        local wt = Drawing.new("Text")
+        wt.Size = 13
+        wt.Center = false
+        wt.Outline = true
+        wt.Color = Color3.fromRGB(255, 255, 255)
+        wt.Transparency = 1
+        wt.Visible = false
+        wt.Font = Drawing.Fonts.Monospace
+        return wt
+    end)
+    if not wmOk then WatermarkText = nil end
 
     local function UnloadScript()
         if ScriptUnloaded then return end
@@ -97,7 +102,7 @@ function Main.New(deps)
             wmFrames = 0
             wmLast = wmNow
         end
-        if S.Watermark_Enabled then
+        if S.Watermark_Enabled and WatermarkText then
             local ok, ping = pcall(function() return math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue() + 0.5) end)
             WatermarkText.Text = string.format("pasta hub | %d fps | %s", wmFps, ok and (tostring(ping) .. " ms") or "--")
             WatermarkText.Position = Vector2.new(cam.ViewportSize.X - WatermarkText.TextBounds.X - 12, 10)
@@ -147,7 +152,9 @@ function Main.New(deps)
                 continue
             end
 
-            local box_size, box_pos, on_screen, distance = esp:box_solve(humanoid.RootPart)
+            local rootPart = humanoid.RootPart
+            if not rootPart then continue end
+            local box_size, box_pos, on_screen, distance = esp:box_solve(rootPart)
             local holder = objects["holder"]
             if not on_screen then
                 holder.Visible = false
