@@ -20,7 +20,10 @@ function Chams.New(S, connections)
     end
 
     function M.Update()
-        if (not S.Chams_Enabled) and (not S.SelfChams_Enabled) then return end
+        if (not S.Chams_Enabled) and (not S.SelfChams_Enabled) then
+            M.Restore()
+            return
+        end
         M.Frame = M.Frame + 1
         if M.Frame % 2 == 1 then return end
         M.Sweep = M.Sweep + 1
