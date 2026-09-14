@@ -583,6 +583,7 @@ function PastaSenseUI:CreateWindow(opts)
 		if gpe then return end
 		if input.KeyCode == toggleKey then
 			Main.Visible = not Main.Visible
+			Snow.Visible = Main.Visible
 			pcall(function() Blur.Enabled = Main.Visible end)
 		end
 	end)
