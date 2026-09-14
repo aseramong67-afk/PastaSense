@@ -11,7 +11,7 @@
 
 local PastaSenseUI = {}
 PastaSenseUI.__index = PastaSenseUI
-PastaSenseUI.Version = "1.6.1"
+PastaSenseUI.Version = "1.7.0"
 PastaSenseUI.Flags = {} -- flag -> { Value = any, Set = fn }
 
 -- // Services
@@ -753,7 +753,7 @@ function PastaSenseUI:CreateWindow(opts)
 				Wrap.LayoutOrder = self._order
 				Wrap.Parent = Scroll
 				local T = Label(Wrap, string.upper(title or "SECTION"), 11, Theme.Section, Theme.FontBold)
-				T.Size = UDim2.new(1, 0, 0, 16)
+				T.Size = UDim2.new(1, -24, 0, 16)
 				local Line = Instance.new("Frame")
 				Line.Size = UDim2.new(0, 26, 0, 2)
 				Line.Position = UDim2.new(0, 1, 0, 19)
@@ -762,6 +762,26 @@ function PastaSenseUI:CreateWindow(opts)
 				Line.BorderSizePixel = 0
 				Line.Parent = Wrap
 				Corner(Line, 1)
+				-- Стрелка + клик по заголовку сворачивает/разворачивает секцию
+				local Arrow = Label(Wrap, "v", 11, Theme.Hint, Theme.FontBold, Enum.TextXAlignment.Right)
+				Arrow.Size = UDim2.new(0, 20, 0, 16)
+				Arrow.Position = UDim2.new(1, -20, 0, 0)
+				local members = {}
+				self._section = members
+				local collapsed = false
+				local Hitbox = Instance.new("TextButton")
+				Hitbox.Size = UDim2.new(1, 0, 0, 26)
+				Hitbox.BackgroundTransparency = 1
+				Hitbox.Text = ""
+				Hitbox.AutoButtonColor = false
+				Hitbox.Parent = Wrap
+				Hitbox.MouseButton1Click:Connect(function()
+					collapsed = not collapsed
+					for _, f in ipairs(members) do
+						if f then f.Visible = not collapsed end
+					end
+					Arrow.Text = collapsed and ">" or "v"
+				end)
 				table.insert(self._tab._elements, { Name = title, Frame = Wrap, SectionTitle = Wrap })
 				return self
 			end
@@ -770,6 +790,9 @@ function PastaSenseUI:CreateWindow(opts)
 				Col._order = Col._order + 1
 				frame.LayoutOrder = Col._order
 				table.insert(Col._tab._elements, { Name = name, Frame = frame })
+				if Col._section then
+					table.insert(Col._section, frame)
+				end
 			end
 
 			-- Обводка + hover-подсветка карточек (убирает "сырость")
