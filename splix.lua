@@ -467,11 +467,13 @@ do
         --
         function window:Move(vector)
             for i,v in pairs(library.drawings) do
-                if v[2][2] then
-                    v[1].Position = utility:Position(0, v[2][1].X, 0, v[2][1].Y, v[2][2])
-                else
-                    v[1].Position = utility:Position(0, vector.X, 0, vector.Y)
-                end
+                pcall(function()
+                    if v[2][2] then
+                        v[1].Position = utility:Position(0, v[2][1].X, 0, v[2][1].Y, v[2][2])
+                    else
+                        v[1].Position = utility:Position(0, vector.X, 0, vector.Y)
+                    end
+                end)
             end
         end
         --
@@ -655,10 +657,12 @@ do
             })
             --
             function window.watermark:UpdateSize()
-                watermark_outline.Size = utility:Size(0, watermark_title.TextBounds.X + 4 + (6*2), 0, 21)
-                watermark_inline.Size = utility:Size(1, -2, 1, -2, watermark_outline)
-                watermark_frame.Size = utility:Size(1, -2, 1, -2, watermark_inline)
-                watermark_accent.Size = utility:Size(1, 0, 0, 1, watermark_frame)
+                pcall(function()
+                    watermark_outline.Size = utility:Size(0, watermark_title.TextBounds.X + 4 + (6*2), 0, 21)
+                    watermark_inline.Size = utility:Size(1, -2, 1, -2, watermark_outline)
+                    watermark_frame.Size = utility:Size(1, -2, 1, -2, watermark_inline)
+                    watermark_accent.Size = utility:Size(1, 0, 0, 1, watermark_frame)
+                end)
             end
             --
             function window.watermark:Visibility()
