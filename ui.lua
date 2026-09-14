@@ -1,11 +1,3 @@
--- ui.lua — Millenium UI + привязка модулей PastaSense
--- Использование:
---   local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/i77lhm/Libraries/refs/heads/main/Millenium/Library.lua"))()
---   local Config = loadstring(game:HttpGet(... .. "modules/config.lua"))() -- или require
---   ... собери deps (Services, Aimbot, ESP, Effects, Chams, Main) ...
---   local UI = loadstring(game:HttpGet(... .. "ui.lua"))()
---   local window = UI.Build(deps, library)
-
 local UI = {}
 
 function UI.Build(deps, library)
@@ -19,492 +11,358 @@ function UI.Build(deps, library)
         end
     end
 
-    -- MilleniumDropdown не ставит заголовок (в библиотеке захардкожен текст "Dropdown") — правим вручную
-    local function dropdown(section, props)
-        local dd = section:dropdown(props)
-        if props.name then
-            pcall(function() dd.items["name"].Text = props.name end)
-        end
-        return dd
-    end
+    local dim2 = UDim2.new
 
     local window = library:window({
-        name = "pasta",
-        suffix = "sense",
-        gameInfo = "PastaSense | universal",
+        name = "PastaSense | " .. os.date("%b %d %Y"),
+        size = dim2(0, 604, 0, 628),
     })
 
-    -- ============ COMBAT ============
-    window:seperator({ name = "Combat" })
-
-    local aimPage, triggerPage = window:tab({ name = "Aimbot", tabs = { "Aimbot", "Trigger" } })
-
-    -- Aimbot page
+    -- ============ COMBAT / AIMBOT ============
+    local aimTab = window:tab({name = "Aimbot"})
     do
-        local leftCol = aimPage:column({})
-        local rightCol = aimPage:column({})
-        local section = leftCol:section({ name = "Aimbot", default = true, size = 1 })
+        local col = aimTab:column()
+        local aimSec, tuneSec = col:multi_section({names = {"Aimbot", "Tuning"}})
 
-        section:toggle({
+        aimSec:toggle({
             name = "Enable Aimbot",
-            default = S.Aimbot_Enabled,
-            seperator = true,
-            type = "toggle",
+            flag = "Aimbot_Enabled",
             callback = function(bool) S.Aimbot_Enabled = bool end,
         })
-        section:toggle({
+        aimSec:toggle({
             name = "Wall Check",
-            default = S.Aimbot_WallCheck,
-            seperator = true,
-            type = "toggle",
+            flag = "Aimbot_WallCheck",
             callback = function(bool) S.Aimbot_WallCheck = bool end,
         })
-        section:toggle({
+        aimSec:toggle({
             name = "Toggle Mode",
-            info = "OFF = hold RMB, ON = FOV Toggle",
-            default = S.Aimbot_ToggleMode,
-            seperator = true,
-            type = "toggle",
+            flag = "Aimbot_ToggleMode",
+            tooltip = "OFF = hold RMB, ON = FOV Toggle",
             callback = function(bool) S.Aimbot_ToggleMode = bool end,
         })
-        section:toggle({
+        aimSec:toggle({
             name = "Team Check",
-            default = S.TeamCheck,
-            seperator = true,
-            type = "toggle",
+            flag = "TeamCheck",
             callback = function(bool) S.TeamCheck = bool end,
         })
-        section:toggle({
+        aimSec:toggle({
             name = "Death Check",
-            default = S.DeathCheck,
-            seperator = true,
-            type = "toggle",
+            flag = "DeathCheck",
             callback = function(bool) S.DeathCheck = bool end,
         })
-        section:toggle({
+        aimSec:toggle({
             name = "Show FOV",
-            default = S.Show_FOV,
-            seperator = true,
-            type = "toggle",
+            flag = "Show_FOV",
             callback = function(bool) S.Show_FOV = bool end,
         })
-
-        local _ = dropdown(section, {
+        aimSec:dropdown({
             name = "Hitbox",
-            items = { "Head", "Torso", "Random" },
-            default = S.Hitbox,
-            seperator = true,
+            flag = "Hitbox",
+            items = {"Head", "Torso", "Random"},
+            default = "Head",
             callback = function(v) S.Hitbox = v end,
         })
 
-        local tuning = rightCol:section({ name = "Tuning", default = true, size = 1 })
-
-        tuning:slider({
+        tuneSec:slider({
             name = "Smoothing",
+            flag = "Aim_Smoothing",
             min = 0, max = 1, interval = 0.01,
             default = S.Aim_Smoothing,
-            seperator = true,
             callback = function(v) S.Aim_Smoothing = v end,
         })
-        tuning:slider({
+        tuneSec:slider({
             name = "FOV",
+            flag = "Aim_FOV",
             min = 10, max = 800, interval = 1,
             default = S.Aim_FOV_Hold,
-            seperator = true,
             callback = function(v) S.Aim_FOV_Hold = v; S.Aim_FOV_Toggle = v end,
         })
-        tuning:slider({
+        tuneSec:slider({
             name = "Max Distance",
+            flag = "Aim_MaxDist",
             min = 100, max = 5000, interval = 10,
             default = S.Aim_MaxDistance,
-            seperator = true,
             callback = function(v) S.Aim_MaxDistance = v end,
         })
-
-        tuning:colorpicker({
+        tuneSec:colorpicker({
             name = "Lock Color",
+            flag = "Aimbot_LockColor",
             color = S.Aimbot_LockColor,
-            seperator = false,
             callback = function(color) S.Aimbot_LockColor = color end,
         })
     end
 
-    -- Trigger page
+    -- ============ COMBAT / TRIGGER ============
+    local trigTab = window:tab({name = "Trigger"})
     do
-        local column = triggerPage:column({})
-        local section = column:section({ name = "Triggerbot", default = true, size = 0.25 })
+        local col = trigTab:column()
+        local sec = col:section({name = "Triggerbot"})
 
-        section:toggle({
+        sec:toggle({
             name = "Enable Trigger",
-            default = S.Trigger_Enabled,
-            seperator = true,
-            type = "toggle",
+            flag = "Trigger_Enabled",
             callback = function(bool) S.Trigger_Enabled = bool end,
         })
-        section:slider({
+        sec:slider({
             name = "Delay (ms)",
+            flag = "Trigger_Delay",
             min = 0, max = 500, interval = 1,
             default = S.Trigger_Delay,
-            seperator = false,
             callback = function(v) S.Trigger_Delay = v end,
         })
     end
 
-    -- ============ VISUALS ============
-    window:seperator({ name = "Visuals" })
-
-    local enemies, teammates, selfTab = window:tab({ name = "Players", tabs = { "Enemies", "Teammates", "Self" } })
-
-    -- Enemies (S.ESP_* + ESPFlags)
+    -- ============ VISUALS / ENEMIES ============
+    local espTab = window:tab({name = "ESP"})
     do
-        local leftCol = enemies:column({})
-        local rightCol = enemies:column({})
-        local general = leftCol:section({ name = "General", default = true, size = 0.3 })
-        general:toggle({
+        local col = espTab:column()
+        local genSec = col:section({name = "General", toggle = false})
+        genSec:toggle({
             name = "Enable ESP",
-            default = S.ESP_Enabled,
-            seperator = true,
-            type = "toggle",
+            flag = "Enabled",
             callback = function(bool) S.ESP_Enabled = bool; ESPFlags["Enabled"] = bool; refresh() end,
         })
-        general:slider({
+        genSec:slider({
             name = "Max Distance",
+            flag = "ESP_MaxDistance",
             min = 100, max = 5000, interval = 10,
             default = S.ESP_MaxDistance,
-            seperator = false,
             callback = function(v) S.ESP_MaxDistance = v end,
         })
 
-        local elements = leftCol:section({ name = "Elements", default = true, size = 0.7 })
-
-        -- Names + submenu (DisplayName / UserName)
-        local nameToggle = elements:toggle({
-            name = "Name",
-            default = ESPFlags["Names"],
-            seperator = true,
-            type = "toggle",
+        genSec:toggle({
+            name = "Names",
+            flag = "Names",
             callback = function(bool) ESPFlags["Names"] = bool; refresh() end,
-        })
-        nameToggle:colorpicker({
+        }):colorpicker({
+            name = "Name Color",
+            flag = "Name_Color",
             color = ESPFlags["Name_Color"].Color,
             callback = function(color) ESPFlags["Name_Color"].Color = color; refresh() end,
         })
-        local nameSettings = nameToggle:settings({})
-        nameSettings:toggle({
-            name = "Show Display Names",
-            default = ESPFlags["Name_DisplayName"],
-            seperator = true,
-            type = "toggle",
-            callback = function(bool) ESPFlags["Name_DisplayName"] = bool; refresh() end,
-        })
-        nameSettings:toggle({
-            name = "Show Usernames",
-            default = ESPFlags["Name_UserName"],
-            seperator = false,
-            type = "toggle",
-            callback = function(bool) ESPFlags["Name_UserName"] = bool; refresh() end,
-        })
 
-        -- Boxes + type
-        local boxToggle = elements:toggle({
+        local boxToggle = genSec:toggle({
             name = "Boxes",
-            default = ESPFlags["Boxes"],
-            seperator = true,
-            type = "toggle",
+            flag = "Boxes",
             callback = function(bool) ESPFlags["Boxes"] = bool; refresh() end,
         })
         boxToggle:colorpicker({
+            name = "Box Color",
+            flag = "Box_Color",
             color = ESPFlags["Box_Color"].Color,
             callback = function(color) ESPFlags["Box_Color"].Color = color; refresh() end,
         })
-        dropdown(elements, {
+
+        genSec:dropdown({
             name = "Box Type",
-            items = { "Corner", "Full" },
-            default = ESPFlags["Box_Type"],
-            seperator = true,
+            flag = "Box_Type",
+            items = {"Corner", "Full"},
+            default = "Corner",
             callback = function(v) ESPFlags["Box_Type"] = v; refresh() end,
         })
 
-        elements:toggle({
+        local hpToggle = genSec:toggle({
             name = "Healthbar",
-            default = ESPFlags["Healthbar"],
-            seperator = true,
-            type = "toggle",
+            flag = "Healthbar",
             callback = function(bool) ESPFlags["Healthbar"] = bool; refresh() end,
         })
-        elements:toggle({
-            name = "Distance",
-            default = ESPFlags["Distance"],
-            seperator = true,
-            type = "toggle",
-            callback = function(bool) ESPFlags["Distance"] = bool; refresh() end,
-        })
-        elements:toggle({
-            name = "Weapon",
-            default = ESPFlags["Weapon"],
-            seperator = true,
-            type = "toggle",
-            callback = function(bool) ESPFlags["Weapon"] = bool; refresh() end,
-        })
-
-        local colors = rightCol:section({ name = "Colors", default = true, size = 0.45 })
-        colors:colorpicker({
-            name = "Health High",
+        hpToggle:colorpicker({
+            name = "High HP",
+            flag = "Health_High",
             color = ESPFlags["Health_High"].Color,
-            seperator = true,
             callback = function(color) ESPFlags["Health_High"].Color = color end,
         })
-        colors:colorpicker({
-            name = "Health Low",
+        hpToggle:colorpicker({
+            name = "Low HP",
+            flag = "Health_Low",
             color = ESPFlags["Health_Low"].Color,
-            seperator = true,
             callback = function(color) ESPFlags["Health_Low"].Color = color end,
         })
-        colors:colorpicker({
+
+        genSec:toggle({
+            name = "Distance",
+            flag = "Distance",
+            callback = function(bool) ESPFlags["Distance"] = bool; refresh() end,
+        }):colorpicker({
             name = "Distance Color",
+            flag = "Distance_Color",
             color = ESPFlags["Distance_Color"].Color,
-            seperator = true,
             callback = function(color) ESPFlags["Distance_Color"].Color = color; refresh() end,
         })
-        colors:colorpicker({
+
+        genSec:toggle({
+            name = "Weapon",
+            flag = "Weapon",
+            callback = function(bool) ESPFlags["Weapon"] = bool; refresh() end,
+        }):colorpicker({
             name = "Weapon Color",
+            flag = "Weapon_Color",
             color = ESPFlags["Weapon_Color"].Color,
-            seperator = false,
             callback = function(color) ESPFlags["Weapon_Color"].Color = color; refresh() end,
         })
     end
 
-    -- Teammates (S.Teammate_*)
+    -- ============ VISUALS / TEAMMATES ============
+    local tmTab = window:tab({name = "Team"})
     do
-        local leftCol = teammates:column({})
-        local rightCol = teammates:column({})
-        local section = leftCol:section({ name = "Teammates", default = true, size = 0.5 })
-        section:toggle({
+        local col = tmTab:column()
+        local sec, colors = col:multi_section({names = {"Teammates", "Colors"}})
+
+        sec:toggle({
             name = "Enable Teammates ESP",
-            default = S.Teammates_Enabled,
-            seperator = true,
-            type = "toggle",
+            flag = "Teammates_Enabled",
             callback = function(bool) S.Teammates_Enabled = bool; refresh() end,
         })
-        section:colorpicker({
+        sec:colorpicker({
             name = "Box Color",
+            flag = "Teammate_Box_Color",
             color = S.Teammate_Box_Color,
-            seperator = true,
             callback = function(color) S.Teammate_Box_Color = color; refresh() end,
         })
-        section:colorpicker({
+        sec:colorpicker({
             name = "Name Color",
+            flag = "Teammate_Name_Color",
             color = S.Teammate_Name_Color,
-            seperator = true,
             callback = function(color) S.Teammate_Name_Color = color; refresh() end,
         })
-        section:colorpicker({
+        sec:colorpicker({
             name = "Weapon Color",
+            flag = "Teammate_Weapon_Color",
             color = S.Teammate_Weapon_Color,
-            seperator = false,
             callback = function(color) S.Teammate_Weapon_Color = color; refresh() end,
         })
 
-        local colors2 = rightCol:section({ name = "Health Colors", default = true, size = 0.5 })
-        colors2:colorpicker({
+        colors:colorpicker({
             name = "Health High",
+            flag = "Teammate_Health_High",
             color = S.Teammate_Health_High,
-            seperator = true,
             callback = function(color) S.Teammate_Health_High = color end,
         })
-        colors2:colorpicker({
+        colors:colorpicker({
             name = "Health Low",
+            flag = "Teammate_Health_Low",
             color = S.Teammate_Health_Low,
-            seperator = true,
             callback = function(color) S.Teammate_Health_Low = color end,
         })
-        colors2:colorpicker({
+        colors:colorpicker({
             name = "Distance Color",
+            flag = "Teammate_Distance_Color",
             color = S.Teammate_Distance_Color,
-            seperator = false,
             callback = function(color) S.Teammate_Distance_Color = color; refresh() end,
         })
     end
 
-    -- Self (S.Self_*)
+    -- ============ VISUALS / SELF ============
+    local selfTab = window:tab({name = "Self"})
     do
-        local leftCol = selfTab:column({})
-        local rightCol = selfTab:column({})
-        local section = leftCol:section({ name = "Self", default = true, size = 0.5 })
-        section:toggle({
+        local col = selfTab:column()
+        local sec, matSec = col:multi_section({names = {"Self ESP", "Self Material"}})
+
+        sec:toggle({
             name = "Enable Self ESP",
-            default = S.SelfESP_Enabled,
-            seperator = true,
-            type = "toggle",
+            flag = "SelfESP_Enabled",
             callback = function(bool) S.SelfESP_Enabled = bool; refresh() end,
         })
-        section:colorpicker({
+        sec:colorpicker({
             name = "Box Color",
+            flag = "Self_Box_Color",
             color = S.Self_Box_Color,
-            seperator = true,
             callback = function(color) S.Self_Box_Color = color; refresh() end,
         })
-        section:colorpicker({
+        sec:colorpicker({
             name = "Name Color",
+            flag = "Self_Name_Color",
             color = S.Self_Name_Color,
-            seperator = true,
             callback = function(color) S.Self_Name_Color = color; refresh() end,
         })
-        section:colorpicker({
+        sec:colorpicker({
             name = "Weapon Color",
+            flag = "Self_Weapon_Color",
             color = S.Self_Weapon_Color,
-            seperator = false,
             callback = function(color) S.Self_Weapon_Color = color; refresh() end,
         })
 
-        local selfMat = rightCol:section({ name = "Self Material", default = true, size = 0.5 })
-        selfMat:toggle({
+        matSec:toggle({
             name = "Enable Self Material",
-            default = S.SelfChams_Enabled,
-            seperator = true,
-            type = "toggle",
+            flag = "SelfChams_Enabled",
             callback = function(bool)
                 S.SelfChams_Enabled = bool
-                if not bool then
-                    pcall(function() deps.Chams.RestoreSelf() end)
-                end
+                if not bool then pcall(function() deps.Chams.RestoreSelf() end) end
             end,
         })
-        dropdown(selfMat, {
+        matSec:dropdown({
             name = "Material",
-            items = { "ForceField", "Neon", "SmoothPlastic", "Plastic", "Glass" },
-            default = S.SelfChams_Material,
-            seperator = true,
+            flag = "SelfChams_Material",
+            items = {"ForceField", "Neon", "SmoothPlastic", "Plastic", "Glass"},
+            default = "ForceField",
             callback = function(v) S.SelfChams_Material = v end,
         })
-        selfMat:colorpicker({
+        matSec:colorpicker({
             name = "Color",
+            flag = "SelfChams_Color",
             color = S.SelfChams_Color,
-            seperator = false,
             callback = function(color) S.SelfChams_Color = color end,
         })
-
-        local colors3 = rightCol:section({ name = "Health Colors", default = true, size = 0.5 })
-        colors3:colorpicker({
-            name = "Health High",
-            color = S.Self_Health_High,
-            seperator = true,
-            callback = function(color) S.Self_Health_High = color end,
-        })
-        colors3:colorpicker({
-            name = "Health Low",
-            color = S.Self_Health_Low,
-            seperator = true,
-            callback = function(color) S.Self_Health_Low = color end,
-        })
-        colors3:colorpicker({
-            name = "Distance Color",
-            color = S.Self_Distance_Color,
-            seperator = false,
-            callback = function(color) S.Self_Distance_Color = color; refresh() end,
-        })
     end
 
-    -- ============ WORLD ============
-    window:seperator({ name = "World" })
-
-    local lightingPage, highlightsPage, miscPage = window:tab({ name = "World", tabs = { "Lighting", "Highlights", "Misc" } })
-
+    -- ============ WORLD / LIGHTING ============
+    local worldTab = window:tab({name = "World"})
     do
-        local leftCol = lightingPage:column({})
-        local rightCol = lightingPage:column({})
-        local section = leftCol:section({ name = "Lighting", default = true, size = 0.5 })
-        section:toggle({
+        local col = worldTab:column()
+        local lightSec, chamsSec = col:multi_section({names = {"Lighting", "Highlights"}})
+
+        lightSec:toggle({
             name = "Fullbright",
-            default = S.Fullbright_Enabled,
-            seperator = true,
-            type = "toggle",
+            flag = "Fullbright_Enabled",
             callback = function(bool) S.Fullbright_Enabled = bool end,
         })
-        section:toggle({
+        lightSec:toggle({
             name = "Ambient",
-            default = S.Ambient_Enabled,
-            seperator = true,
-            type = "toggle",
+            flag = "Ambient_Enabled",
             callback = function(bool) S.Ambient_Enabled = bool end,
         })
-
-        local colors4 = rightCol:section({ name = "Colors", default = true, size = 0.5 })
-        colors4:colorpicker({
+        lightSec:colorpicker({
             name = "Ambient Color",
+            flag = "Ambient_Color",
             color = S.Ambient_Color,
-            seperator = false,
             callback = function(color) S.Ambient_Color = color end,
         })
-    end
 
-    do
-        local leftCol = highlightsPage:column({})
-        local rightCol = highlightsPage:column({})
-        local section = leftCol:section({ name = "Highlights", default = true, size = 0.5 })
-        section:toggle({
+        chamsSec:toggle({
             name = "Enemy Highlights",
-            default = S.Chams_Enabled,
-            seperator = true,
-            type = "toggle",
+            flag = "Chams_Enabled",
             callback = function(bool)
                 S.Chams_Enabled = bool
-                if not bool then
-                    pcall(function() deps.Chams.RestoreHighlights() end)
-                end
+                if not bool then pcall(function() deps.Chams.RestoreHighlights() end) end
             end,
         })
-        section:colorpicker({
+        chamsSec:colorpicker({
             name = "Highlight Color",
+            flag = "Chams_Color",
             color = S.Chams_Color,
-            seperator = false,
             callback = function(color) S.Chams_Color = color end,
         })
-    end
-
-    do
-        local column = miscPage:column({})
-        local section = column:section({ name = "Misc", default = true, size = 0.35 })
-        section:toggle({
+        chamsSec:toggle({
             name = "Watermark",
-            default = S.Watermark_Enabled,
-            seperator = true,
-            type = "toggle",
+            flag = "Watermark_Enabled",
             callback = function(bool) S.Watermark_Enabled = bool end,
         })
-        section:toggle({
+        chamsSec:toggle({
             name = "Tracers",
-            default = S.Tracers_Enabled,
-            seperator = true,
-            type = "toggle",
+            flag = "Tracers_Enabled",
             callback = function(bool) S.Tracers_Enabled = bool end,
         })
-        section:button({
+        chamsSec:button({
             name = "Unload",
             callback = function()
                 pcall(function()
-                    if deps.Main and deps.Main.Unload then
-                        deps.Main.Unload()
-                    elseif getgenv().PastaUnload then
-                        getgenv().PastaUnload()
-                    end
+                    if deps.Main and deps.Main.Unload then deps.Main.Unload()
+                    elseif getgenv().PastaUnload then getgenv().PastaUnload() end
                 end)
-                pcall(function() library:unload_menu() end)
+                pcall(function() library:set_menu_visibility(false) end)
             end,
         })
     end
-
-    -- init_config создаёт кнопку Delete с delfile, которая падает — делаем свою вкладку
-    window:seperator({ name = "Settings" })
-    local sPage = window:tab({ name = "Configs", tabs = { "Main" } })
-    local sCol = sPage:column({})
-    local sSec = sCol:section({ name = "Settings", default = true, size = 0.5 })
-    sSec:colorpicker({
-        name = "Menu Accent",
-        color = Color3.fromRGB(155, 150, 219),
-        seperator = true,
-        callback = function(color) pcall(function() library:update_theme("accent", color) end) end,
-    })
 
     return window
 end
